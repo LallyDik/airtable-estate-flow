@@ -2,8 +2,8 @@
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
-const AIRTABLE_BASE_ID = 'YOUR_BASE_ID_HERE'; // למשל: appXXXXXXXXXXXXXX
-const AIRTABLE_API_KEY = 'YOUR_API_KEY_HERE'; // Personal Access Token מ-Airtable
+const AIRTABLE_BASE_ID = 'appOvCJ87X4ohISLL'; // למשל: appXXXXXXXXXXXXXX
+const AIRTABLE_API_KEY = 'path5GRXWyf81Jz1U.2bda996b8605d6d737714d48c82444a362105f15798ce99789aa9b604fe63ac3'; // Personal Access Token מ-Airtable
 
 const BASE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 
