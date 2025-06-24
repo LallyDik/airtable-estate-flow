@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,23 +19,63 @@ interface CreatePropertyModalProps {
 
 const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId }: CreatePropertyModalProps) => {
   const [formData, setFormData] = useState({
-    neighborhood: editProperty?.neighborhood || '',
-    city: editProperty?.city || 'חריש',
-    street: editProperty?.street || '',
-    number: editProperty?.number || '',
-    floor: editProperty?.floor || '',
-    rooms: editProperty?.rooms || '',
-    type: editProperty?.type || '',
-    price: editProperty?.price || 0,
-    offersUntil: editProperty?.offersUntil || '',
-    description: editProperty?.description || '',
-    title: editProperty?.title || '',
-    address: editProperty?.address || '',
-    size: editProperty?.size || 0,
+    neighborhood: '',
+    city: 'חריש',
+    street: '',
+    number: '',
+    floor: '',
+    rooms: '',
+    type: '',
+    price: 0,
+    offersUntil: '',
+    description: '',
+    title: '',
+    address: '',
+    size: 0,
   });
 
   const [exclusivityDocument, setExclusivityDocument] = useState<File | null>(null);
-  const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>(editProperty?.exclusivityDocument || '');
+  const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>('');
+
+  // עדכון הטופס כשפותחים לעריכה
+  useEffect(() => {
+    if (editProperty) {
+      setFormData({
+        neighborhood: editProperty.neighborhood || '',
+        city: editProperty.city || 'חריש',
+        street: editProperty.street || '',
+        number: editProperty.number || '',
+        floor: editProperty.floor || '',
+        rooms: editProperty.rooms || '',
+        type: editProperty.type || '',
+        price: editProperty.price || 0,
+        offersUntil: editProperty.offersUntil || '',
+        description: editProperty.description || '',
+        title: editProperty.title || '',
+        address: editProperty.address || '',
+        size: editProperty.size || 0,
+      });
+      setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
+    } else {
+      // איפוס הטופס כשיוצרים נכס חדש
+      setFormData({
+        neighborhood: '',
+        city: 'חריש',
+        street: '',
+        number: '',
+        floor: '',
+        rooms: '',
+        type: '',
+        price: 0,
+        offersUntil: '',
+        description: '',
+        title: '',
+        address: '',
+        size: 0,
+      });
+      setExclusivityDocumentUrl('');
+    }
+  }, [editProperty, isOpen]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -78,24 +118,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       exclusivityDocument: exclusivityDocumentUrl,
     });
     
-    // Reset form
-    setFormData({
-      neighborhood: '',
-      city: 'חריש',
-      street: '',
-      number: '',
-      floor: '',
-      rooms: '',
-      type: '',
-      price: 0,
-      offersUntil: '',
-      description: '',
-      title: '',
-      address: '',
-      size: 0,
-    });
-    setExclusivityDocument(null);
-    setExclusivityDocumentUrl('');
     onClose();
   };
 
@@ -166,7 +188,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="number">מספר</Label>
               <Input
                 id="number"
-                type="number"
+                type="text"
                 value={formData.number}
                 onChange={(e) => setFormData({...formData, number: e.target.value})}
                 required
@@ -198,7 +220,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="type">סוג נכס</Label>
               <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="בחר סוג נכס" />
                 </SelectTrigger>
                 <SelectContent>
                   {propertyTypes.map((type) => (
@@ -225,7 +247,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="offersUntil">מוכן לקבל הצעות עד</Label>
               <Input
                 id="offersUntil"
-                type="number"
+                type="text"
                 value={formData.offersUntil}
                 onChange={(e) => setFormData({...formData, offersUntil: e.target.value})}
               />
