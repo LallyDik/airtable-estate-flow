@@ -1,8 +1,8 @@
-
 import { Property, Post } from '@/types';
 
-const AIRTABLE_BASE_ID = 'appOvCJ87X4ohISLL'; // Replace with your actual Base ID
-const AIRTABLE_API_KEY = 'path5GRXWyf81Jz1U.2bda996b8605d6d737714d48c82444a362105f15798ce99789aa9b604fe63ac3'; // Replace with your actual API Key
+// ⚠️ עדכן את הפרטים הבאים עם הנתונים האמיתיים שלך מ-Airtable:
+const AIRTABLE_BASE_ID = 'YOUR_BASE_ID_HERE'; // החלף עם ה-Base ID האמיתי שלך
+const AIRTABLE_API_KEY = 'YOUR_API_KEY_HERE'; // החלף עם ה-API Key האמיתי שלך
 
 const BASE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 
@@ -12,6 +12,22 @@ const headers = {
 };
 
 export class AirtableService {
+  // בדיקת חיבור
+  static async testConnection() {
+    try {
+      const response = await fetch(`${BASE_URL}/Users?maxRecords=1`, { headers });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('✅ החיבור ל-Airtable הצליח:', data);
+      return true;
+    } catch (error) {
+      console.error('❌ שגיאה בחיבור ל-Airtable:', error);
+      return false;
+    }
+  }
+
   // Users API
   static async getUsers() {
     const response = await fetch(`${BASE_URL}/Users`, { headers });
