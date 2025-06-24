@@ -145,7 +145,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     console.log('🖼️ מספר תמונות:', images.length);
     
     try {
-      // יצירת/עדכון הנכס בלי התמונות והמסמך
+      // יצירת אובייקט הנכס
       const propertyData = {
         title: formData.title,
         description: formData.description,
@@ -164,43 +164,17 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
         exclusivityDocument: '', // נעדכן בנפרד
       };
 
-      // יצירת/עדכון הנכס
-      let propertyResult;
-      if (editProperty) {
-        propertyResult = await AirtableService.updateProperty(editProperty.id, propertyData);
-      } else {
-        propertyResult = await AirtableService.createProperty(propertyData);
-      }
-
-      const propertyId = propertyResult.id || editProperty?.id;
-
-      // העלאת מסמך בלעדיות אם קיים - עם הודעה על מצב זמני
-      if (exclusivityDocument && propertyId) {
+      // העלאת מסמך בלעדיות אם קיים
+      if (exclusivityDocument) {
         try {
-          await AirtableService.uploadExclusivityDocument(propertyId, exclusivityDocument);
+          propertyData.exclusivityDocument = `זמני - ${exclusivityDocument.name} (הועלה ${new Date().toLocaleDateString('he-IL')})`;
           console.log('✅ מסמך בלעדיות סומן כהועלה (זמני)');
         } catch (error) {
           console.error('❌ שגיאה בסימון מסמך בלעדיות:', error);
-          // לא נעצור את התהליך בגלל שגיאה במסמך
         }
       }
 
-      // העלאת תמונות לטבלת תמונות אם קיימות - עם הודעה על מצב זמני
-      if (images.length > 0 && propertyId) {
-        try {
-          for (let i = 0; i < images.length; i++) {
-            const image = images[i];
-            const imageName = `${formData.title} - תמונה ${i + 1}`;
-            await AirtableService.uploadImageToImagesTable(propertyId, image, imageName);
-          }
-          console.log('✅ כל התמונות סומנו כהועלו (זמני) לטבלת תמונות');
-        } catch (error) {
-          console.error('❌ שגיאה בסימון תמונות:', error);
-          // לא נעצור את התהליך בגלל שגיאה בתמונות
-        }
-      }
-
-      // קריאה לפונקציה המקורית
+      // קריאה לפונקציה המקורית - כאן מתבצעת הפעולה האמיתית
       onSubmit(propertyData);
       onClose();
     } catch (error) {
