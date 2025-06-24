@@ -377,30 +377,51 @@ export class AirtableService {
 
   // Posts API - עדכון לטבלה "פרסומי נכסים"
   static async getPosts(userEmail: string) {
+    console.log('🔍 מבקש פרסומים עבור אימייל:', userEmail);
+    
     try {
-      const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${userEmail}'`;
-      const response = await fetch(
-        `${BASE_URL}/פרסומי נכסים?filterByFormula=${encodeURIComponent(filterFormula)}`,
-        { headers }
-      );
+      // ראשית נבדוק איזה שדות יש בטבלה
+      console.log('📋 בודק שדות בטבלת פרסומי נכסים...');
+      await this.getPostsTableFields();
+      
+      // נקבל את כל הפרסומים ונסנן לפי המתווך
+      const response = await fetch(`${BASE_URL}/פרסומי נכסים`, { headers });
+      
+      console.log('📊 סטטוס תגובה לפרסומים:', response.status);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ נתוני פרסומים:', data);
+        
         if (data.records && data.records.length > 0) {
-          return data.records.map((record: any) => ({
+          // נסנן את הפרסומים לפי אימייל המתווך
+          const userPosts = data.records.filter((record: any) => 
+            record.fields.broker === userEmail || 
+            record.fields['מתווך'] === userEmail ||
+            record.fields['אימייל מתווך'] === userEmail
+          );
+          
+          console.log('📈 מספר פרסומים של המתווך:', userPosts.length);
+          
+          return userPosts.map((record: any) => ({
             id: record.id,
             ...record.fields
           }));
         }
+      } else {
+        const errorText = await response.text();
+        console.error('❌ שגיאה בקבלת פרסומים:', errorText);
       }
     } catch (error) {
-      console.error('שגיאה בקבלת פרסומים:', error);
+      console.error('❌ שגיאה בקבלת פרסומים:', error);
     }
     
     return [];
   }
 
   static async createPost(post: Omit<Post, 'id'>) {
+    console.log('📝 יוצר פרסום חדש:', post);
+    
     const response = await fetch(`${BASE_URL}/פרסומי נכסים`, {
       method: 'POST',
       headers,
@@ -410,14 +431,19 @@ export class AirtableService {
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ שגיאה ביצירת פרסום:', errorText);
       throw new Error(`Failed to create post: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('✅ פרסום נוצר בהצלחה:', data);
     return { id: data.id, ...data.fields };
   }
 
   static async updatePost(id: string, fields: Partial<Post>) {
+    console.log('📝 מעדכן פרסום:', id);
+    
     const response = await fetch(`${BASE_URL}/פרסומי נכסים/${id}`, {
       method: 'PATCH',
       headers,
@@ -425,22 +451,31 @@ export class AirtableService {
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ שגיאה בעדכון פרסום:', errorText);
       throw new Error(`Failed to update post: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('✅ פרסום עודכן בהצלחה:', data);
     return { id: data.id, ...data.fields };
   }
 
   static async deletePost(id: string) {
+    console.log('🗑️ מוחק פרסום:', id);
+    
     const response = await fetch(`${BASE_URL}/פרסומי נכסים/${id}`, {
       method: 'DELETE',
       headers
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ שגיאה במחיקת פרסום:', errorText);
       throw new Error(`Failed to delete post: ${response.status} ${response.statusText}`);
     }
+    
+    console.log('✅ פרסום נמחק בהצלחה');
   }
 
   // Images API - שינוי לטבלה "תמונות"
