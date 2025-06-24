@@ -13,7 +13,7 @@ const headers = {
 };
 
 // פונקציה למיפוי נתוני הטופס לשדות Airtable
-const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
+const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: boolean = false) => {
   const fields: Record<string, any> = {
     'שם נכס לתצוגה': property.title,
     'תיאור חופשי לפרסום': property.description,
@@ -24,8 +24,8 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     'קומה': property.floor,
   };
 
-  // הוספת קישור למתווך
-  if (property.broker) {
+  // הוספת קישור למתווך רק בעת יצירת נכס חדש, לא בעדכון
+  if (!isUpdate && property.broker) {
     fields['מתווך בעל בלעדיות'] = [property.broker]; // Array format for linked record
   }
 
@@ -178,7 +178,7 @@ export class AirtableService {
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
-    const airtableFields = mapPropertyToAirtableFields(property);
+    const airtableFields = mapPropertyToAirtableFields(property, false); // false = יצירה חדשה
     console.log('📝 שדות ליצירת נכס:', airtableFields);
     
     const response = await fetch(`${BASE_URL}/נכסים`, {
@@ -200,7 +200,7 @@ export class AirtableService {
   }
 
   static async updateProperty(id: string, property: Partial<Property>) {
-    const airtableFields = mapPropertyToAirtableFields(property as Omit<Property, 'id'>);
+    const airtableFields = mapPropertyToAirtableFields(property as Omit<Property, 'id'>, true); // true = עדכון
     console.log('📝 שדות לעדכון נכס:', airtableFields);
     
     const response = await fetch(`${BASE_URL}/נכסים/${id}`, {
