@@ -69,10 +69,43 @@ export class AirtableService {
     }));
   }
 
-  // Properties API - שינוי לטבלה "נכסים" ושדה "מתווך"
+  // בדיקה שהמתווך קיים בטבלת אנשי קשר
+  static async verifyBrokerExists(brokerId: string) {
+    console.log('🔍 בודק שהמתווך קיים:', brokerId);
+    try {
+      const filterFormula = `{Email} = '${brokerId}'`;
+      const response = await fetch(
+        `${BASE_URL}/אנשי קשר?filterByFormula=${encodeURIComponent(filterFormula)}`,
+        { headers }
+      );
+      
+      if (!response.ok) {
+        console.error('❌ שגיאה בבדיקת מתווך:', response.status);
+        return false;
+      }
+      
+      const data = await response.json();
+      const brokerExists = data.records && data.records.length > 0;
+      console.log(brokerExists ? '✅ מתווך נמצא' : '❌ מתווך לא נמצא');
+      return brokerExists;
+    } catch (error) {
+      console.error('❌ שגיאה בבדיקת מתווך:', error);
+      return false;
+    }
+  }
+
+  // Properties API - שינוי לטבלה "נכסים" ושדה "מתווך בעל בלעדיות"
   static async getProperties(brokerId: string) {
     console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
-    const filterFormula = `{מתווך} = '${brokerId}'`;
+    
+    // בדיקה שהמתווך קיים
+    const brokerExists = await this.verifyBrokerExists(brokerId);
+    if (!brokerExists) {
+      console.warn('⚠️ מתווך לא נמצא בטבלת אנשי קשר');
+      return [];
+    }
+    
+    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerId}'`;
     console.log('📝 נוסחת סינון:', filterFormula);
     
     try {
@@ -150,9 +183,16 @@ export class AirtableService {
     }
   }
 
-  // Posts API - שינוי לטבלה "פרסומים" ושדה "מתווך"
+  // Posts API - שינוי לטבלה "פרסומים" ושדה "מתווך בעל בלעדיות"
   static async getPosts(brokerId: string) {
-    const filterFormula = `{מתווך} = '${brokerId}'`;
+    // בדיקה שהמתווך קיים
+    const brokerExists = await this.verifyBrokerExists(brokerId);
+    if (!brokerExists) {
+      console.warn('⚠️ מתווך לא נמצא בטבלת אנשי קשר');
+      return [];
+    }
+    
+    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerId}'`;
     const response = await fetch(
       `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
