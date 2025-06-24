@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -22,7 +23,6 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     'שכונה': property.neighborhood,
     'עיר': property.city,
     'רחוב': property.street,
-    'מספר בית': property.number,
     'קומה': property.floor,
     'מוכן לקבל הצעות עד': property.offersUntil,
   };
