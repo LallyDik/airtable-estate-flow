@@ -167,13 +167,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="חריש">חריש</SelectItem>
-                  <SelectItem value="תל אביב">תל אביב</SelectItem>
-                  <SelectItem value="ירושלים">ירושלים</SelectItem>
-                  <SelectItem value="חיפה">חיפה</SelectItem>
-                  <SelectItem value="באר שבע">באר שבע</SelectItem>
-                  <SelectItem value="פתח תקווה">פתח תקווה</SelectItem>
-                  <SelectItem value="נתניה">נתניה</SelectItem>
+                  <SelectItem value="חריש">חריש</SelectItem
                 </SelectContent>
               </Select>
             </div>
