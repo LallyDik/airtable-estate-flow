@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Property } from '@/types';
-import { Building, MapPin, DollarSign, Maximize, Edit, Trash2 } from 'lucide-react';
+import { Building, MapPin, DollarSign, Home, Edit, Trash2 } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -66,8 +66,8 @@ const PropertyCard = ({ property, onEdit, onDelete }: PropertyCardProps) => {
           </div>
           
           <div className="flex items-center gap-2 text-gray-600">
-            <Maximize className="h-4 w-4" />
-            <span className="text-sm">{property.size} מ"ר</span>
+            <Home className="h-4 w-4" />
+            <span className="text-sm">{property.rooms} חדרים</span>
           </div>
           
           <div className="flex items-center gap-2 text-green-600 font-semibold">

@@ -31,7 +31,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     description: '',
     title: '',
     address: '',
-    size: 0,
   });
 
   const [exclusivityDocument, setExclusivityDocument] = useState<File | null>(null);
@@ -57,7 +56,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           description: editProperty.description || '',
           title: editProperty.title || '',
           address: editProperty.address || '',
-          size: editProperty.size || 0,
         });
         setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
       } else {
@@ -76,7 +74,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           description: '',
           title: '',
           address: '',
-          size: 0,
         });
         setExclusivityDocument(null);
         setExclusivityDocumentUrl('');
@@ -112,7 +109,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       address: fullAddress,
       price: formData.price,
       type: formData.type,
-      size: formData.size,
+      size: 0, // Default value since size field is removed
       broker: brokerId,
       createdAt: editProperty?.createdAt || new Date().toISOString(),
       neighborhood: formData.neighborhood,
@@ -169,7 +166,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="חריש">חריש</SelectItem>
-                  <SelectItem value="תל אביב">تل אביב</SelectItem>
+                  <SelectItem value="תל אביב">תל אביב</SelectItem>
                   <SelectItem value="ירושלים">ירושלים</SelectItem>
                   <SelectItem value="חיפה">חיפה</SelectItem>
                   <SelectItem value="באר שבע">באר שבע</SelectItem>
