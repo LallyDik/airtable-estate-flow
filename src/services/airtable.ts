@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -65,9 +66,8 @@ const mapPostToAirtableFields = (post: Omit<Post, 'id'>, propertyRecordId?: stri
     'תאריך פרסום': post.date,
     'זמן פרסום': post.timeSlot === 'morning' ? 'בוקר' : 
                   post.timeSlot === 'afternoon' ? 'צהריים' : 'ערב',
-    'סטטוס פרסום': 'פרסום מיידי',
-    'מועד פרסום': `${post.date} ${post.timeSlot === 'morning' ? 'בוקר' : 
-                   post.timeSlot === 'afternoon' ? 'צהריים' : 'ערב'}`
+    'סטטוס פרסום': 'פרסום מיידי'
+    // הסרנו את 'מועד פרסום' כי זה שדה מחושב
   };
 
   // הוספת קישור לנכס אם קיים
