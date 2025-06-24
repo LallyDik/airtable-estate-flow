@@ -21,21 +21,6 @@ export class AirtableService {
     console.log('API Key length:', AIRTABLE_API_KEY.length);
     console.log('Base URL:', BASE_URL);
     
-    if (AIRTABLE_BASE_ID === 'YOUR_BASE_ID_HERE') {
-      console.error('❌ Base ID לא עודכן! החלף את YOUR_BASE_ID_HERE עם ה-Base ID האמיתי');
-      return false;
-    }
-    
-    if (AIRTABLE_API_KEY === 'YOUR_API_KEY_HERE') {
-      console.error('❌ API Key לא עודכן! החלף את YOUR_API_KEY_HERE עם ה-API Key האמיתי');
-      return false;
-    }
-    
-    if (AIRTABLE_BASE_ID && !AIRTABLE_BASE_ID.startsWith('app')) {
-      console.error('❌ Base ID צריך להתחיל ב-app');
-      return false;
-    }
-    
     return true;
   }
 
@@ -74,6 +59,9 @@ export class AirtableService {
   // Users API
   static async getUsers() {
     const response = await fetch(`${BASE_URL}/Users`, { headers });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+    }
     const data = await response.json();
     return data.records.map((record: any) => ({
       id: record.id,
@@ -83,16 +71,40 @@ export class AirtableService {
 
   // Properties API
   static async getProperties(brokerId: string) {
+    console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
     const filterFormula = `{broker} = '${brokerId}'`;
-    const response = await fetch(
-      `${BASE_URL}/Properties?filterByFormula=${encodeURIComponent(filterFormula)}`,
-      { headers }
-    );
-    const data = await response.json();
-    return data.records.map((record: any) => ({
-      id: record.id,
-      ...record.fields
-    }));
+    console.log('📝 נוסחת סינון:', filterFormula);
+    
+    try {
+      const response = await fetch(
+        `${BASE_URL}/Properties?filterByFormula=${encodeURIComponent(filterFormula)}`,
+        { headers }
+      );
+      
+      console.log('📊 סטטוס תגובה עבור Properties:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ שגיאה בקבלת נכסים:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ נתוני נכסים התקבלו:', data);
+      
+      if (!data.records) {
+        console.warn('⚠️ אין records בתגובה');
+        return [];
+      }
+      
+      return data.records.map((record: any) => ({
+        id: record.id,
+        ...record.fields
+      }));
+    } catch (error) {
+      console.error('❌ שגיאה בטעינת נכסים:', error);
+      throw error;
+    }
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
@@ -103,6 +115,11 @@ export class AirtableService {
         fields: property
       })
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create property: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     return { id: data.id, ...data.fields };
   }
@@ -113,15 +130,24 @@ export class AirtableService {
       headers,
       body: JSON.stringify({ fields })
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update property: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     return { id: data.id, ...data.fields };
   }
 
   static async deleteProperty(id: string) {
-    await fetch(`${BASE_URL}/Properties/${id}`, {
+    const response = await fetch(`${BASE_URL}/Properties/${id}`, {
       method: 'DELETE',
       headers
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to delete property: ${response.status} ${response.statusText}`);
+    }
   }
 
   // Posts API
@@ -131,11 +157,16 @@ export class AirtableService {
       `${BASE_URL}/Posts?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
     );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
-    return data.records.map((record: any) => ({
+    return data.records?.map((record: any) => ({
       id: record.id,
       ...record.fields
-    }));
+    })) || [];
   }
 
   static async createPost(post: Omit<Post, 'id'>) {
@@ -146,6 +177,11 @@ export class AirtableService {
         fields: post
       })
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create post: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     return { id: data.id, ...data.fields };
   }
@@ -156,15 +192,24 @@ export class AirtableService {
       headers,
       body: JSON.stringify({ fields })
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update post: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     return { id: data.id, ...data.fields };
   }
 
   static async deletePost(id: string) {
-    await fetch(`${BASE_URL}/Posts/${id}`, {
+    const response = await fetch(`${BASE_URL}/Posts/${id}`, {
       method: 'DELETE',
       headers
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to delete post: ${response.status} ${response.statusText}`);
+    }
   }
 
   // Images API
@@ -174,10 +219,15 @@ export class AirtableService {
       `${BASE_URL}/Images?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
     );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch images: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
-    return data.records.map((record: any) => ({
+    return data.records?.map((record: any) => ({
       id: record.id,
       ...record.fields
-    }));
+    })) || [];
   }
 }
