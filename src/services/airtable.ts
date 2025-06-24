@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -54,6 +53,13 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
   // רק אם יש ערך בשדה "מוכן לקבל הצעות עד" נוסיף אותו
   if (property.offersUntil && property.offersUntil.trim() !== '') {
     fields['מוכן לקבל הצעות עד'] = property.offersUntil.trim();
+  }
+
+  // הוספת מסמך בלעדיות אם קיים
+  if (property.exclusivityDocument && property.exclusivityDocument.trim() !== '') {
+    console.log('📎 מוסיף מסמך בלעדיות לשדות:', property.exclusivityDocument);
+    // לעת עתה נשמור כטקסט, בעתיד נוכל להעלות לשירות קבצים
+    fields['מסמך בלעדיות'] = property.exclusivityDocument;
   }
 
   console.log('📝 שדות ליצירת/עדכון נכס:', fields);
@@ -210,6 +216,8 @@ export class AirtableService {
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
+    console.log('🏠 יוצר נכס חדש:', property.title);
+    
     // קבלת Record ID של המתווך לפני יצירת הנכס
     const brokerRecordId = await this.getBrokerRecordIdByEmail(property.broker);
     
@@ -235,10 +243,13 @@ export class AirtableService {
     }
     
     const data = await response.json();
+    console.log('✅ נכס נוצר בהצלחה:', data.id);
     return { id: data.id, ...data.fields };
   }
 
   static async updateProperty(id: string, property: Partial<Property>) {
+    console.log('📝 מעדכן נכס:', id);
+    
     const airtableFields = mapPropertyToAirtableFields(property as Omit<Property, 'id'>, true); // true = עדכון
     console.log('📝 שדות לעדכון נכס:', airtableFields);
     
@@ -257,6 +268,7 @@ export class AirtableService {
     }
     
     const data = await response.json();
+    console.log('✅ נכס עודכן בהצלחה:', data.id);
     return { id: data.id, ...data.fields };
   }
 

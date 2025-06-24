@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUp, X } from 'lucide-react';
+import { FileUp, X, Upload, FileImage } from 'lucide-react';
 import { Property } from '@/types';
 
 interface CreatePropertyModalProps {
@@ -34,6 +33,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
 
   const [exclusivityDocument, setExclusivityDocument] = useState<File | null>(null);
   const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>('');
+  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   // עדכון הטופס כשפותחים לעריכה או יצירה חדשה
   useEffect(() => {
@@ -81,17 +82,42 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('📎 העלאת מסמך בלעדיות:', file.name);
       setExclusivityDocument(file);
-      // In a real app, you would upload this to a file storage service
-      // For now, we'll create a temporary URL
+      
+      // יצירת URL זמני לתצוגה
       const tempUrl = URL.createObjectURL(file);
       setExclusivityDocumentUrl(tempUrl);
+      
+      console.log('✅ מסמך בלעדיות הועלה:', file.name);
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      console.log('🖼️ העלאת תמונות:', files.length);
+      const newImages = Array.from(files);
+      setImages(prevImages => [...prevImages, ...newImages]);
+      
+      // יצירת URLs זמניים לתצוגה
+      const newUrls = newImages.map(file => URL.createObjectURL(file));
+      setImageUrls(prevUrls => [...prevUrls, ...newUrls]);
+      
+      console.log('✅ תמונות הועלו:', newImages.length);
     }
   };
 
   const removeFile = () => {
+    console.log('🗑️ מוחק מסמך בלעדיות');
     setExclusivityDocument(null);
     setExclusivityDocumentUrl('');
+  };
+
+  const removeImage = (index: number) => {
+    console.log('🗑️ מוחק תמונה:', index);
+    setImages(prevImages => prevImages.filter((_, i) => i !== index));
+    setImageUrls(prevUrls => prevUrls.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,6 +139,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
     console.log('🔄 שולח נכס עם מתווך:', brokerId);
+    console.log('📎 מסמך בלעדיות:', exclusivityDocument?.name || 'אין');
+    console.log('🖼️ מספר תמונות:', images.length);
     
     onSubmit({
       title: formData.title, // משתמש בשם הנכס שהוזן בטופס
@@ -300,6 +328,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                     type="file"
                     id="exclusivityDocument"
                     onChange={handleFileUpload}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     className="hidden"
                   />
                   <label
@@ -311,6 +340,55 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                   </label>
                 </div>
               )}
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="images">תמונות</Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              {/* תצוגת תמונות קיימות */}
+              {imageUrls.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`תמונה ${index + 1}`}
+                        className="w-full h-20 object-cover rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 text-red-600 hover:text-red-700 bg-white/80 hover:bg-white/90 rounded-full p-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* כפתור העלאת תמונות */}
+              <div className="text-center">
+                <input
+                  type="file"
+                  id="images"
+                  onChange={handleImageUpload}
+                  accept=".jpg,.jpeg,.png,.webp"
+                  multiple
+                  className="hidden"
+                />
+                <label
+                  htmlFor="images"
+                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <FileImage className="h-4 w-4" />
+                  הוסף תמונות
+                </label>
+                <p className="text-sm text-gray-600 mt-2">ניתן לבחור מספר תמונות</p>
+              </div>
             </div>
           </div>
           
