@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -70,10 +69,10 @@ export class AirtableService {
     }));
   }
 
-  // Properties API - שינוי לטבלה "נכסים"
+  // Properties API - שינוי לטבלה "נכסים" ושדה "מתווך"
   static async getProperties(brokerId: string) {
     console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
-    const filterFormula = `{broker} = '${brokerId}'`;
+    const filterFormula = `{מתווך} = '${brokerId}'`;
     console.log('📝 נוסחת סינון:', filterFormula);
     
     try {
@@ -151,9 +150,9 @@ export class AirtableService {
     }
   }
 
-  // Posts API - שינוי לטבלה "פרסומים"
+  // Posts API - שינוי לטבלה "פרסומים" ושדה "מתווך"
   static async getPosts(brokerId: string) {
-    const filterFormula = `{broker} = '${brokerId}'`;
+    const filterFormula = `{מתווך} = '${brokerId}'`;
     const response = await fetch(
       `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
