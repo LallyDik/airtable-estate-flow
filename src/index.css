@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -99,5 +100,40 @@
 
   body {
     @apply bg-background text-foreground;
+    direction: rtl;
+  }
+
+  /* RTL support for common components */
+  .text-left {
+    text-align: right;
+  }
+  
+  .text-right {
+    text-align: left;
+  }
+  
+  /* Fix flex layouts for RTL */
+  .flex-row {
+    flex-direction: row-reverse;
+  }
+  
+  /* Adjust margins and padding for RTL */
+  .ml-auto {
+    margin-right: auto;
+    margin-left: unset;
+  }
+  
+  .mr-auto {
+    margin-left: auto;
+    margin-right: unset;
+  }
+  
+  /* Icon positioning fixes for RTL */
+  .justify-between {
+    direction: ltr;
+  }
+  
+  .justify-between > * {
+    direction: rtl;
   }
 }
