@@ -34,13 +34,20 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     fields['סוג נכס'] = property.type.trim();
   }
 
-  // המרת כמות חדרים למספר אם זה אפשרי, אחרת נשאיר כטקסט
-  if (property.rooms && property.rooms.trim() !== '') {
-    const roomsAsNumber = parseFloat(property.rooms);
-    if (!isNaN(roomsAsNumber)) {
-      fields['כמות חדרים'] = roomsAsNumber;
-    } else {
-      fields['כמות חדרים'] = property.rooms.trim();
+  // תיקון לשדה כמות חדרים - נטפל בו בצורה בטוחה
+  if (property.rooms !== undefined && property.rooms !== null && property.rooms !== '') {
+    // המרת הערך למחרוזת ראשית
+    const roomsStr = String(property.rooms);
+    
+    // אם זה מחרוזת עם ערך, ננקה אותה
+    if (roomsStr.trim() !== '') {
+      // נבדוק אם זה מספר תקין
+      const roomsAsNumber = parseFloat(roomsStr);
+      if (!isNaN(roomsAsNumber)) {
+        fields['כמות חדרים'] = roomsAsNumber;
+      } else {
+        fields['כמות חדרים'] = roomsStr.trim();
+      }
     }
   }
 
