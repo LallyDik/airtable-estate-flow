@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -94,6 +95,30 @@ export class AirtableService {
     }
   }
 
+  // פונקציה חדשה לבדיקת כל הנכסים - לדיבוג
+  static async debugAllProperties() {
+    console.log('🔍 בודק את כל הנכסים בטבלה:');
+    try {
+      const response = await fetch(`${BASE_URL}/נכסים?maxRecords=10`, { headers });
+      
+      if (!response.ok) {
+        console.error('❌ שגיאה בקבלת נכסים לדיבוג:', response.status);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('🔍 כל הנכסים בטבלה:', data);
+      
+      if (data.records && data.records.length > 0) {
+        console.log('📝 דוגמת נכס ראשון:');
+        console.log('Fields:', data.records[0].fields);
+        console.log('Available field names:', Object.keys(data.records[0].fields));
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בדיבוג נכסים:', error);
+    }
+  }
+
   // Properties API - שינוי לטבלה "נכסים" ושדה "מתווך בעל בלעדיות"
   static async getProperties(brokerId: string) {
     console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
@@ -104,6 +129,9 @@ export class AirtableService {
       console.warn('⚠️ מתווך לא נמצא בטבלת אנשי קשר');
       return [];
     }
+    
+    // הרצת בדיקת דיבוג
+    await this.debugAllProperties();
     
     const filterFormula = `{מתווך בעל בלעדיות} = '${brokerId}'`;
     console.log('📝 נוסחת סינון:', filterFormula);
