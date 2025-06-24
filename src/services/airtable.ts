@@ -59,6 +59,28 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
   return fields;
 };
 
+// פונקציה למיפוי נתוני פרסום לשדות Airtable
+const mapPostToAirtableFields = (post: Omit<Post, 'id'>, propertyRecordId?: string) => {
+  const fields: Record<string, any> = {
+    'תאריך פרסום': post.date,
+    'זמן פרסום': post.timeSlot === 'morning' ? 'בוקר' : 
+                  post.timeSlot === 'afternoon' ? 'צהריים' : 'ערב',
+    'סטטוס פרסום': 'פרסום מיידי',
+    'מועד פרסום': `${post.date} ${post.timeSlot === 'morning' ? 'בוקר' : 
+                   post.timeSlot === 'afternoon' ? 'צהריים' : 'ערב'}`
+  };
+
+  // הוספת קישור לנכס אם קיים
+  if (propertyRecordId) {
+    fields['נכסים לפרסום'] = [propertyRecordId];
+  } else if (post.property) {
+    fields['נכסים לפרסום'] = [post.property];
+  }
+
+  console.log('📝 שדות ליצירת פרסום:', fields);
+  return fields;
+};
+
 export class AirtableService {
   // בדיקת קונפיגורציה
   static checkConfiguration() {
@@ -375,7 +397,7 @@ export class AirtableService {
     }
   }
 
-  // Posts API - עדכון לטבלה "פרסומי נכסים"
+  // Posts API - עדכון לטבלה "פרסומי נכסים" עם השדות הנכונים
   static async getPosts(userEmail: string) {
     console.log('🔍 מבקש פרסומים עבור אימייל:', userEmail);
     
@@ -394,18 +416,25 @@ export class AirtableService {
         console.log('✅ נתוני פרסומים:', data);
         
         if (data.records && data.records.length > 0) {
-          // נסנן את הפרסומים לפי אימייל המתווך
-          const userPosts = data.records.filter((record: any) => 
-            record.fields.broker === userEmail || 
-            record.fields['מתווך'] === userEmail ||
-            record.fields['אימייל מתווך'] === userEmail
-          );
+          // קבלת Record ID של המתווך
+          const brokerRecordId = await this.getBrokerRecordIdByEmail(userEmail);
+          
+          // נסנן את הפרסומים לפי Record ID של המתווך
+          const userPosts = data.records.filter((record: any) => {
+            const recordBrokers = record.fields['מתווך'];
+            return recordBrokers && recordBrokers.includes(brokerRecordId);
+          });
           
           console.log('📈 מספר פרסומים של המתווך:', userPosts.length);
           
           return userPosts.map((record: any) => ({
             id: record.id,
-            ...record.fields
+            property: record.fields['נכסים לפרסום'] ? record.fields['נכסים לפרסום'][0] : '',
+            date: record.fields['תאריך פרסום'] || record.fields['Calculation'] || '',
+            timeSlot: this.mapTimeSlotFromAirtable(record.fields['זמן פרסום']),
+            broker: userEmail,
+            createdAt: record.createdTime || new Date().toISOString(),
+            propertyTitle: record.fields['שם נכס (from נכסים לפרסום)'] || 'נכס'
           }));
         }
       } else {
@@ -419,14 +448,37 @@ export class AirtableService {
     return [];
   }
 
+  // פונקציה למיפוי זמן פרסום מ-Airtable לסוג TimeSlot
+  static mapTimeSlotFromAirtable(timeValue: string): 'morning' | 'afternoon' | 'evening' {
+    if (!timeValue) return 'morning';
+    
+    const lowerValue = timeValue.toLowerCase();
+    if (lowerValue.includes('בוקר')) return 'morning';
+    if (lowerValue.includes('צהריים')) return 'afternoon';
+    if (lowerValue.includes('ערב')) return 'evening';
+    
+    return 'morning'; // ברירת מחדל
+  }
+
   static async createPost(post: Omit<Post, 'id'>) {
     console.log('📝 יוצר פרסום חדש:', post);
+    
+    // קבלת Record ID של המתווך
+    const brokerRecordId = await this.getBrokerRecordIdByEmail(post.broker);
+    
+    if (!brokerRecordId) {
+      throw new Error(`לא נמצא מתווך עבור האימייל: ${post.broker}`);
+    }
+    
+    const airtableFields = mapPostToAirtableFields(post);
+    // הוספת המתווך
+    airtableFields['מתווך'] = [brokerRecordId];
     
     const response = await fetch(`${BASE_URL}/פרסומי נכסים`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        fields: post
+        fields: airtableFields
       })
     });
     
@@ -444,10 +496,14 @@ export class AirtableService {
   static async updatePost(id: string, fields: Partial<Post>) {
     console.log('📝 מעדכן פרסום:', id);
     
+    const airtableFields = mapPostToAirtableFields(fields as Omit<Post, 'id'>);
+    
     const response = await fetch(`${BASE_URL}/פרסומי נכסים/${id}`, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ fields })
+      body: JSON.stringify({ 
+        fields: airtableFields 
+      })
     });
     
     if (!response.ok) {
