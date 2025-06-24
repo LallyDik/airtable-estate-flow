@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     floor: '',
     rooms: '',
     type: '',
-    price: 0,
+    price: '',
     offersUntil: '',
     description: '',
     title: '',
@@ -48,7 +49,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           floor: editProperty.floor || '',
           rooms: editProperty.rooms || '',
           type: editProperty.type || '',
-          price: editProperty.price || 0,
+          price: editProperty.price ? editProperty.price.toString() : '',
           offersUntil: editProperty.offersUntil || '',
           description: editProperty.description || '',
           title: editProperty.title || '',
@@ -65,7 +66,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           floor: '',
           rooms: '',
           type: '',
-          price: 0,
+          price: '',
           offersUntil: '',
           description: '',
           title: '',
@@ -96,16 +97,16 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create full address from components (without house number)
+    // Create full address from components
     const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
     onSubmit({
       title: formData.title || `${formData.type} ב${formData.neighborhood}`,
       description: formData.description,
       address: fullAddress,
-      price: formData.price,
+      price: formData.price ? Number(formData.price) : 0,
       type: formData.type,
-      size: 0, // Default value since size field is removed
+      size: 0,
       broker: brokerId,
       createdAt: editProperty?.createdAt || new Date().toISOString(),
       neighborhood: formData.neighborhood,
@@ -222,9 +223,10 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="price">מחיר שיווק (₪) *</Label>
               <Input
                 id="price"
-                type="number"
+                type="text"
                 value={formData.price}
-                onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                placeholder="הכנס מחיר"
                 required
               />
             </div>

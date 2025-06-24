@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -18,12 +19,21 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     'תיאור חופשי לפרסום': property.description,
     'מחיר שיווק': property.price,
     'סוג נכס': property.type,
-    'כמות חדרים': property.rooms,
     'שכונה': property.neighborhood,
     'עיר': property.city,
     'רחוב': property.street,
     'קומה': property.floor,
   };
+
+  // המרת כמות חדרים למספר אם זה אפשרי, אחרת נשאיר כטקסט
+  if (property.rooms) {
+    const roomsAsNumber = parseFloat(property.rooms);
+    if (!isNaN(roomsAsNumber)) {
+      fields['כמות חדרים'] = roomsAsNumber;
+    } else {
+      fields['כמות חדרים'] = property.rooms;
+    }
+  }
 
   // רק אם יש ערך בשדה "מוכן לקבל הצעות עד" נוסיף אותו
   if (property.offersUntil && property.offersUntil.trim() !== '') {
