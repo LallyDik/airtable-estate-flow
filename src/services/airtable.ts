@@ -73,7 +73,7 @@ export class AirtableService {
   static async verifyBrokerExists(brokerId: string) {
     console.log('🔍 בודק שהמתווך קיים:', brokerId);
     try {
-      const filterFormula = `{Email} = '${brokerId}'`;
+      const filterFormula = `{אימייל} = '${brokerId}'`;
       const response = await fetch(
         `${BASE_URL}/אנשי קשר?filterByFormula=${encodeURIComponent(filterFormula)}`,
         { headers }
