@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { User, LogOut, Building, Calendar } from 'lucide-react';
@@ -12,13 +11,31 @@ const Index = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [activeTab, setActiveTab] = useState('properties');
 
+  // טעינת נתוני המשתמש מ-localStorage בטעינת העמוד
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userAuth');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('שגיאה בטעינת נתוני המשתמש:', error);
+        localStorage.removeItem('userAuth');
+      }
+    }
+  }, []);
+
   const handleLogin = (userData: UserType) => {
     setUser(userData);
+    // שמירת נתוני המשתמש ב-localStorage
+    localStorage.setItem('userAuth', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setUser(null);
     setActiveTab('properties');
+    // מחיקת נתוני המשתמש מ-localStorage
+    localStorage.removeItem('userAuth');
   };
 
   if (!user) {
