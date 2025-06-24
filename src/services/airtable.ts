@@ -1,8 +1,8 @@
 
 import { Property, Post } from '@/types';
 
-const AIRTABLE_BASE_ID = 'YOUR_BASE_ID'; // Replace with your actual Base ID
-const AIRTABLE_API_KEY = 'YOUR_API_KEY'; // Replace with your actual API Key
+const AIRTABLE_BASE_ID = 'appOvCJ87X4ohISLL'; // Replace with your actual Base ID
+const AIRTABLE_API_KEY = 'path5GRXWyf81Jz1U.2bda996b8605d6d737714d48c82444a362105f15798ce99789aa9b604fe63ac3'; // Replace with your actual API Key
 
 const BASE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 
