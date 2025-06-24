@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -14,7 +13,7 @@ const headers = {
 
 // פונקציה למיפוי נתוני הטופס לשדות Airtable
 const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
-  return {
+  const fields: Record<string, any> = {
     'שם נכס לתצוגה': property.title,
     'תיאור חופשי לפרסום': property.description,
     'מחיר שיווק': property.price,
@@ -24,8 +23,15 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     'עיר': property.city,
     'רחוב': property.street,
     'קומה': property.floor,
-    'מוכן לקבל הצעות עד': property.offersUntil,
   };
+
+  // רק אם יש ערך בשדה "מוכן לקבל הצעות עד" נוסיף אותו
+  if (property.offersUntil && property.offersUntil.trim() !== '') {
+    fields['מוכן לקבל הצעות עד'] = property.offersUntil.trim();
+  }
+
+  console.log('📝 שדות ליצירת/עדכון נכס:', fields);
+  return fields;
 };
 
 export class AirtableService {
