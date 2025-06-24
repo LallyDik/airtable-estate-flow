@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Calendar, Loader2, AlertCircle, TrendingUp } from 'lucide-react';
 import { Post, Property, User } from '@/types';
 import { AirtableService } from '@/services/airtable';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface PostsTabProps {
   user: User;
@@ -35,7 +37,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
       setProperties(propertiesData);
     } catch (error) {
       toast({
-        title: "שגיאה",
+        title: "שגיאה בטעינת פרסומים",
         description: "לא ניתן לטעון את הפרסומים. בדוק את החיבור ל-Airtable.",
         variant: "destructive"
       });
@@ -50,8 +52,8 @@ const PostsTab = ({ user }: PostsTabProps) => {
       if (editingPost) {
         await AirtableService.updatePost(editingPost.id, postData);
         toast({
-          title: "הצלחה",
-          description: "הפרסום עודכן בהצלחה"
+          title: "פרסום עודכן",
+          description: "הפרסום עודכן בהצלחה במערכת"
         });
       } else {
         await AirtableService.createPost(postData);
@@ -63,16 +65,16 @@ const PostsTab = ({ user }: PostsTabProps) => {
           });
         }
         toast({
-          title: "הצלחה",
-          description: "הפרסום נוסף בהצלחה"
+          title: "פרסום נוסף",
+          description: "הפרסום נוסף בהצלחה למערכת"
         });
       }
       loadData();
       setEditingPost(undefined);
     } catch (error) {
       toast({
-        title: "שגיאה",
-        description: "לא ניתן לשמור את הפרסום",
+        title: "שגיאה בשמירת פרסום",
+        description: "לא ניתן לשמור את הפרסום. נסה שנית.",
         variant: "destructive"
       });
       console.error('Error saving post:', error);
@@ -80,18 +82,18 @@ const PostsTab = ({ user }: PostsTabProps) => {
   };
 
   const handleDeletePost = async (id: string) => {
-    if (confirm('האם אתה בטוח שברצונך למחוק את הפרסום?')) {
+    if (confirm('האם אתה בטוח שברצונך למחוק את הפרסום? פעולה זו אינה הפיכה.')) {
       try {
         await AirtableService.deletePost(id);
         toast({
-          title: "הצלחה",
-          description: "הפרסום נמחק בהצלחה"
+          title: "פרסום נמחק",
+          description: "הפרסום נמחק בהצלחה מהמערכת"
         });
         loadData();
       } catch (error) {
         toast({
-          title: "שגיאה",
-          description: "לא ניתן למחוק את הפרסום",
+          title: "שגיאה במחיקת פרסום",
+          description: "לא ניתן למחוק את הפרסום. נסה שנית.",
           variant: "destructive"
         });
         console.error('Error deleting post:', error);
@@ -118,64 +120,148 @@ const PostsTab = ({ user }: PostsTabProps) => {
     return getTodayPostCount() < 2 && properties.length > 0;
   };
 
+  const todayPosts = getTodayPostCount();
+  const totalPosts = posts.length;
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען פרסומים...</p>
-        </div>
+      <div className="flex items-center justify-center p-12">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">טוען פרסומים...</h3>
+            <p className="text-gray-600 text-center">
+              מתחבר ל-Airtable ומביא את הפרסומים שלך
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">הפרסומים שלי</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            פרסומים היום: {getTodayPostCount()}/2
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">הפרסומים שלי</h2>
+          <p className="text-gray-600">
+            ניהול וצפייה בכל הפרסומים שלך ב-Airtable
           </p>
         </div>
         <Button 
           onClick={() => setIsModalOpen(true)}
           disabled={!canCreateNewPost()}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+          className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg disabled:opacity-50"
+          size="lg"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-5 w-5 mr-2" />
           פרסום חדש
         </Button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">פרסומים היום</p>
+                <p className="text-2xl font-bold text-gray-800">{todayPosts}/2</p>
+              </div>
+              <div className="rounded-full bg-blue-50 p-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <Badge variant={todayPosts >= 2 ? "destructive" : "secondary"}>
+                {todayPosts >= 2 ? "הגעת למגבלה" : `נותרו ${2 - todayPosts}`}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">סה"כ פרסומים</p>
+                <p className="text-2xl font-bold text-gray-800">{totalPosts}</p>
+              </div>
+              <div className="rounded-full bg-green-50 p-3">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">נכסים זמינים</p>
+                <p className="text-2xl font-bold text-gray-800">{properties.length}</p>
+              </div>
+              <div className="rounded-full bg-purple-50 p-3">
+                <Plus className="h-5 w-5 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Alerts */}
       {!canCreateNewPost() && properties.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">
-            יש להוסיף נכסים לפני יצירת פרסומים
-          </p>
-        </div>
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <p className="text-yellow-800 font-medium">
+                יש להוסיף נכסים לפני יצירת פרסומים
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {!canCreateNewPost() && getTodayPostCount() >= 2 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">
-            הגעת למגבלת 2 פרסומים ביום
-          </p>
-        </div>
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-800 font-medium">
+                הגעת למגבלת 2 פרסומים ביום. נסה שוב מחר.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
+      {/* Content */}
       {posts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600 mb-4">אין לך פרסומים עדיין</p>
-          {canCreateNewPost() && (
-            <Button 
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              צור פרסום ראשון
-            </Button>
-          )}
-        </div>
+        <Card className="w-full">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="rounded-full bg-green-50 p-4 mb-4">
+              <Calendar className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              טרם יצרת פרסומים
+            </h3>
+            <p className="text-gray-600 text-center mb-6 max-w-md">
+              צור את הפרסום הראשון שלך כדי להתחיל לפרסם נכסים ברשתות החברתיות
+            </p>
+            {canCreateNewPost() && (
+              <Button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                size="lg"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                צור פרסום ראשון
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (

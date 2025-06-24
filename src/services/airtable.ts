@@ -137,7 +137,7 @@ export class AirtableService {
     }
   }
 
-  // פונקציה חדשה לבדיקת כל הנכסים - לדיבוג
+  // פונקציה חדשה לבדיקת כל הנכסים - לדיבוג מורחב
   static async debugAllProperties() {
     console.log('🔍 בודק את כל הנכסים בטבלה:');
     try {
@@ -155,6 +155,17 @@ export class AirtableService {
         console.log('📝 דוגמת נכס ראשון:');
         console.log('Fields:', data.records[0].fields);
         console.log('Available field names:', Object.keys(data.records[0].fields));
+        
+        // דיבוג מפורט לשדה מתווך בעל בלעדיות
+        data.records.forEach((record, index) => {
+          console.log(`🏠 נכס ${index + 1}:`);
+          console.log(`  שם: ${record.fields['שם נכס לתצוגה'] || 'לא זמין'}`);
+          console.log(`  מתווך בעל בלעדיות:`, record.fields['מתווך בעל בלעדיות']);
+          console.log(`  סוג השדה מתווך:`, typeof record.fields['מתווך בעל בלעדיות']);
+          if (Array.isArray(record.fields['מתווך בעל בלעדיות'])) {
+            console.log(`  ערכי המערך:`, record.fields['מתווך בעל בלעדיות']);
+          }
+        });
       }
     } catch (error) {
       console.error('❌ שגיאה בדיבוג נכסים:', error);
@@ -175,40 +186,49 @@ export class AirtableService {
     // הרצת בדיקת דיבוג
     await this.debugAllProperties();
     
-    // שינוי הסינון לשימוש ב-Record ID
-    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerRecordId}'`;
-    console.log('📝 נוסחת סינון חדשה (עם Record ID):', filterFormula);
+    // ניסיון מספר נוסחאות סינון
+    const filterFormulas = [
+      `{מתווך בעל בלעדיות} = '${brokerRecordId}'`,
+      `FIND('${brokerRecordId}', {מתווך בעל בלעדיות}) > 0`,
+      `ARRAYJOIN({מתווך בעל בלעדיות}) = '${brokerRecordId}'`
+    ];
     
-    try {
-      const response = await fetch(
-        `${BASE_URL}/נכסים?filterByFormula=${encodeURIComponent(filterFormula)}`,
-        { headers }
-      );
+    for (let i = 0; i < filterFormulas.length; i++) {
+      const filterFormula = filterFormulas[i];
+      console.log(`📝 מנסה נוסחת סינון ${i + 1}:`, filterFormula);
       
-      console.log('📊 סטטוס תגובה עבור נכסים:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ שגיאה בקבלת נכסים:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      try {
+        const response = await fetch(
+          `${BASE_URL}/נכסים?filterByFormula=${encodeURIComponent(filterFormula)}`,
+          { headers }
+        );
+        
+        console.log(`📊 סטטוס תגובה עבור נוסחה ${i + 1}:`, response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ שגיאה בנוסחה ${i + 1}:`, errorText);
+          continue;
+        }
+        
+        const data = await response.json();
+        console.log(`✅ נתוני נכסים עבור נוסחה ${i + 1}:`, data);
+        
+        if (data.records && data.records.length > 0) {
+          console.log(`🎉 מצאנו נכסים עם נוסחה ${i + 1}!`);
+          return data.records.map((record: any) => ({
+            id: record.id,
+            ...record.fields
+          }));
+        }
+      } catch (error) {
+        console.error(`❌ שגיאה בנוסחה ${i + 1}:`, error);
+        continue;
       }
-      
-      const data = await response.json();
-      console.log('✅ נתוני נכסים התקבלו:', data);
-      
-      if (!data.records) {
-        console.warn('⚠️ אין records בתגובה');
-        return [];
-      }
-      
-      return data.records.map((record: any) => ({
-        id: record.id,
-        ...record.fields
-      }));
-    } catch (error) {
-      console.error('❌ שגיאה בטעינת נכסים:', error);
-      throw error;
     }
+    
+    console.log('⚠️ לא נמצאו נכסים עם אף אחת מהנוסחאות');
+    return [];
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
