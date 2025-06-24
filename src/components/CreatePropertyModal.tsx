@@ -97,6 +97,12 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // בדיקה שסוג נכס נבחר
+    if (!formData.type || formData.type.trim() === '') {
+      alert('יש לבחור סוג נכס');
+      return;
+    }
+    
     // Create full address from components
     const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
@@ -105,7 +111,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       description: formData.description,
       address: fullAddress,
       price: formData.price ? Number(formData.price) : 0,
-      type: formData.type || '', // נוודא שזה לא undefined
+      type: formData.type, // כעת אנחנו יודעים שזה לא ריק
       size: 0,
       broker: brokerId,
       createdAt: editProperty?.createdAt || new Date().toISOString(),
@@ -204,8 +210,12 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             </div>
             
             <div>
-              <Label htmlFor="type">סוג נכס</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+              <Label htmlFor="type">סוג נכס *</Label>
+              <Select 
+                value={formData.type} 
+                onValueChange={(value) => setFormData({...formData, type: value})}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר סוג נכס" />
                 </SelectTrigger>
