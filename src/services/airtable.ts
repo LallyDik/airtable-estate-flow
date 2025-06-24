@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -9,6 +10,24 @@ const BASE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 const headers = {
   'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
   'Content-Type': 'application/json',
+};
+
+// פונקציה למיפוי נתוני הטופס לשדות Airtable
+const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
+  return {
+    'שם נכס לתצוגה': property.title,
+    'תיאור חופשי לפרסום': property.description,
+    'מחיר שיווק': property.price,
+    'סוג נכס': property.type,
+    'שטח': property.size,
+    'כמות חדרים': property.rooms,
+    'שכונה': property.neighborhood,
+    'עיר': property.city,
+    'רחוב': property.street,
+    'מספר בית': property.number,
+    'קומה': property.floor,
+    'מוכן לקבל הצעות עד': property.offersUntil,
+  };
 };
 
 export class AirtableService {
@@ -115,6 +134,7 @@ export class AirtableService {
           floor: record.fields['קומה'] || '',
           number: record.fields['מספר בית'] || '',
           offersUntil: record.fields['מוכן לקבל הצעות עד'] || '',
+          exclusivityDocument: record.fields['מסמך בלעדיות'] || '',
           ...record.fields
         }));
       } else {
@@ -128,15 +148,20 @@ export class AirtableService {
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
+    const airtableFields = mapPropertyToAirtableFields(property);
+    console.log('📝 שדות ליצירת נכס:', airtableFields);
+    
     const response = await fetch(`${BASE_URL}/נכסים`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        fields: property
+        fields: airtableFields
       })
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ שגיאה ביצירת נכס:', errorText);
       throw new Error(`Failed to create property: ${response.status} ${response.statusText}`);
     }
     
@@ -144,14 +169,21 @@ export class AirtableService {
     return { id: data.id, ...data.fields };
   }
 
-  static async updateProperty(id: string, fields: Partial<Property>) {
+  static async updateProperty(id: string, property: Partial<Property>) {
+    const airtableFields = mapPropertyToAirtableFields(property as Omit<Property, 'id'>);
+    console.log('📝 שדות לעדכון נכס:', airtableFields);
+    
     const response = await fetch(`${BASE_URL}/נכסים/${id}`, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ fields })
+      body: JSON.stringify({ 
+        fields: airtableFields 
+      })
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ שגיאה בעדכון נכס:', errorText);
       throw new Error(`Failed to update property: ${response.status} ${response.statusText}`);
     }
     
