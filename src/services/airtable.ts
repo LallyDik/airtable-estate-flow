@@ -89,12 +89,13 @@ export class AirtableService {
       const brokerExists = data.records && data.records.length > 0;
       
       if (brokerExists) {
-        console.log('✅ מתווך נמצא');
-        console.log('📄 פרטי המתווך:', data.records[0]);
-        console.log('📝 שדות המתווך:', data.records[0].fields);
-        console.log('🔑 מפתחות השדות:', Object.keys(data.records[0].fields));
+        console.log('✅ מתווך נמצא בטבלת אנשי קשר');
+        console.log('📄 פרטי המתווך מטבלת אנשי קשר:', data.records[0]);
+        console.log('📝 שדות המתווך מטבלת אנשי קשר:', data.records[0].fields);
+        console.log('🔑 מפתחות השדות בטבלת אנשי קשר:', Object.keys(data.records[0].fields));
+        console.log('🆔 Record ID של המתווך:', data.records[0].id);
       } else {
-        console.log('❌ מתווך לא נמצא');
+        console.log('❌ מתווך לא נמצא בטבלת אנשי קשר');
       }
       
       return brokerExists;
