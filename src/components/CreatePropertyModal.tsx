@@ -44,7 +44,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
         console.log('✏️ מעדכן טופס לעריכה:', editProperty);
         setFormData({
           neighborhood: editProperty.neighborhood || '',
-          city: editProperty.city || 'חריש',
+          city: 'חריש', // תמיד חריש
           street: editProperty.street || '',
           floor: editProperty.floor || '',
           rooms: editProperty.rooms || '',
@@ -162,14 +162,12 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             
             <div>
               <Label htmlFor="city">עיר</Label>
-              <Select value={formData.city} onValueChange={(value) => setFormData({...formData, city: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="חריש">חריש</SelectItem
-                </SelectContent>
-              </Select>
+              <Input
+                id="city"
+                value="חריש"
+                readOnly
+                className="bg-gray-100"
+              />
             </div>
           </div>
           
