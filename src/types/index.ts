@@ -17,6 +17,15 @@ export interface Property {
   createdAt: string;
   lastPostDate?: string;
   nextAvailablePostDate?: string;
+  // New fields from the form
+  neighborhood?: string;
+  city?: string;
+  street?: string;
+  number?: string;
+  floor?: string;
+  rooms?: string;
+  offersUntil?: string;
+  exclusivityNumber?: string;
 }
 
 export interface Post {
