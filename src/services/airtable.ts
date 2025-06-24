@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -70,13 +69,13 @@ export class AirtableService {
     }));
   }
 
-  // Properties API - שימוש בשדה אימייל ישירות
-  static async getProperties(brokerId: string) {
-    console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
+  // Properties API - השתמש רק בנוסחה של אימייל מתווך
+  static async getProperties(userEmail: string) {
+    console.log('🔍 מבקש נכסים עבור אימייל:', userEmail);
     
     try {
-      // נוסחת סינון פשוטה לפי אימייל המתווך
-      const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${brokerId}'`;
+      // נוסחה פשוטה ויחידה לפי אימייל המתווך
+      const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${userEmail}'`;
       console.log('📝 נוסחת סינון:', filterFormula);
       
       const response = await fetch(
@@ -98,7 +97,6 @@ export class AirtableService {
       
       if (data.records && data.records.length > 0) {
         console.log('🎉 מצאנו נכסים!');
-        console.log('🔍 פרטי הנכס הראשון:', data.records[0]);
         
         return data.records.map((record: any) => ({
           id: record.id,
@@ -108,7 +106,7 @@ export class AirtableService {
           price: record.fields['מחיר שיווק'] || 0,
           type: record.fields['סוג נכס'] || 'לא צוין',
           size: record.fields['שטח'] || 0,
-          broker: brokerId,
+          broker: userEmail,
           createdAt: record.fields['create time'] || new Date().toISOString(),
           rooms: record.fields['כמות חדרים'] || '',
           neighborhood: record.fields['שכונה'] || '',
@@ -173,9 +171,9 @@ export class AirtableService {
   }
 
   // Posts API - שימוש בשדה אימייל ישירות
-  static async getPosts(brokerId: string) {
+  static async getPosts(userEmail: string) {
     try {
-      const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${brokerId}'`;
+      const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${userEmail}'`;
       const response = await fetch(
         `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
         { headers }

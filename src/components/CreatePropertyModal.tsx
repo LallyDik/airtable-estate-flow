@@ -37,43 +37,50 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
   const [exclusivityDocument, setExclusivityDocument] = useState<File | null>(null);
   const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>('');
 
-  // עדכון הטופס כשפותחים לעריכה
+  // עדכון הטופס כשפותחים לעריכה או יצירה חדשה
   useEffect(() => {
-    if (editProperty) {
-      setFormData({
-        neighborhood: editProperty.neighborhood || '',
-        city: editProperty.city || 'חריש',
-        street: editProperty.street || '',
-        number: editProperty.number || '',
-        floor: editProperty.floor || '',
-        rooms: editProperty.rooms || '',
-        type: editProperty.type || '',
-        price: editProperty.price || 0,
-        offersUntil: editProperty.offersUntil || '',
-        description: editProperty.description || '',
-        title: editProperty.title || '',
-        address: editProperty.address || '',
-        size: editProperty.size || 0,
-      });
-      setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
-    } else {
-      // איפוס הטופס כשיוצרים נכס חדש
-      setFormData({
-        neighborhood: '',
-        city: 'חריש',
-        street: '',
-        number: '',
-        floor: '',
-        rooms: '',
-        type: '',
-        price: 0,
-        offersUntil: '',
-        description: '',
-        title: '',
-        address: '',
-        size: 0,
-      });
-      setExclusivityDocumentUrl('');
+    console.log('🔄 עדכון טופס:', { editProperty, isOpen });
+    
+    if (isOpen) {
+      if (editProperty) {
+        console.log('✏️ מעדכן טופס לעריכה:', editProperty);
+        setFormData({
+          neighborhood: editProperty.neighborhood || '',
+          city: editProperty.city || 'חריש',
+          street: editProperty.street || '',
+          number: editProperty.number || '',
+          floor: editProperty.floor || '',
+          rooms: editProperty.rooms || '',
+          type: editProperty.type || '',
+          price: editProperty.price || 0,
+          offersUntil: editProperty.offersUntil || '',
+          description: editProperty.description || '',
+          title: editProperty.title || '',
+          address: editProperty.address || '',
+          size: editProperty.size || 0,
+        });
+        setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
+      } else {
+        console.log('➕ איפוס טופס לנכס חדש');
+        // איפוס הטופס כשיוצרים נכס חדש
+        setFormData({
+          neighborhood: '',
+          city: 'חריש',
+          street: '',
+          number: '',
+          floor: '',
+          rooms: '',
+          type: '',
+          price: 0,
+          offersUntil: '',
+          description: '',
+          title: '',
+          address: '',
+          size: 0,
+        });
+        setExclusivityDocument(null);
+        setExclusivityDocumentUrl('');
+      }
     }
   }, [editProperty, isOpen]);
 
