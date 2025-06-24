@@ -136,11 +136,11 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="city">עיר</Label>
               <Select value={formData.city} onValueChange={(value) => setFormData({...formData, city: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="בחר עיר" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="חריש">חריש</SelectItem>
-                  <SelectItem value="תל אביב">תל אביב</SelectItem>
+                  <SelectItem value="תל אביב">تل אביב</SelectItem>
                   <SelectItem value="ירושלים">ירושלים</SelectItem>
                   <SelectItem value="חיפה">חיפה</SelectItem>
                   <SelectItem value="באר שבע">באר שבע</SelectItem>
@@ -166,6 +166,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="number">מספר</Label>
               <Input
                 id="number"
+                type="number"
                 value={formData.number}
                 onChange={(e) => setFormData({...formData, number: e.target.value})}
                 required
@@ -197,7 +198,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="type">סוג נכס</Label>
               <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="בחר סוג נכס" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {propertyTypes.map((type) => (
@@ -221,12 +222,12 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             </div>
             
             <div>
-              <Label htmlFor="offersUntil">מזמן לקבלת הצעות עד</Label>
+              <Label htmlFor="offersUntil">מוכן לקבל הצעות עד</Label>
               <Input
                 id="offersUntil"
+                type="number"
                 value={formData.offersUntil}
                 onChange={(e) => setFormData({...formData, offersUntil: e.target.value})}
-                placeholder="תאריך או זמן"
               />
             </div>
           </div>
@@ -239,7 +240,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               rows={4}
               required
-              placeholder="תיאור מפורט של הנכס..."
             />
           </div>
           
@@ -269,7 +269,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                   <input
                     type="file"
                     id="exclusivityDocument"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
@@ -280,9 +279,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                     <FileUp className="h-4 w-4" />
                     העלה מסמך בלעדיות
                   </label>
-                  <p className="text-xs text-gray-500 mt-2">
-                    PDF, Word, או תמונה
-                  </p>
                 </div>
               )}
             </div>
@@ -292,8 +288,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             <Button type="button" variant="outline" className="mb-2">
               הוסף +
             </Button>
-            <p className="text-sm text-gray-600">העלאת תמונות</p>
-            <p className="text-xs text-gray-500 mt-1">לחץ כדי להוסיף תמונות של הנכס</p>
+            <p className="text-sm text-gray-600">תמונות / סרטונים</p>
           </div>
           
           <div className="flex gap-2 pt-4">
