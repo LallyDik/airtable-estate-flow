@@ -34,7 +34,8 @@ export class AirtableService {
     
     try {
       console.log('📡 שולח בקשה ל-Airtable...');
-      const response = await fetch(`${BASE_URL}/Users?maxRecords=1`, { headers });
+      // שינוי שם הטבלה לעברית
+      const response = await fetch(`${BASE_URL}/אנשי קשר?maxRecords=1`, { headers });
       
       console.log('📊 סטטוס תגובה:', response.status);
       console.log('📊 סטטוס טקסט:', response.statusText);
@@ -51,14 +52,14 @@ export class AirtableService {
     } catch (error) {
       console.error('❌ שגיאה בחיבור ל-Airtable:', error);
       console.error('💡 בדוק שה-Base ID וה-API Key נכונים');
-      console.error('💡 וודא שיש לך הרשאות לגשת לטבלה Users');
+      console.error('💡 וודא שיש לך הרשאות לגשת לטבלה אנשי קשר');
       return false;
     }
   }
 
-  // Users API
+  // Users API - שינוי לטבלה "אנשי קשר"
   static async getUsers() {
-    const response = await fetch(`${BASE_URL}/Users`, { headers });
+    const response = await fetch(`${BASE_URL}/אנשי קשר`, { headers });
     if (!response.ok) {
       throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
     }
@@ -69,7 +70,7 @@ export class AirtableService {
     }));
   }
 
-  // Properties API
+  // Properties API - שינוי לטבלה "נכסים"
   static async getProperties(brokerId: string) {
     console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
     const filterFormula = `{broker} = '${brokerId}'`;
@@ -77,11 +78,11 @@ export class AirtableService {
     
     try {
       const response = await fetch(
-        `${BASE_URL}/Properties?filterByFormula=${encodeURIComponent(filterFormula)}`,
+        `${BASE_URL}/נכסים?filterByFormula=${encodeURIComponent(filterFormula)}`,
         { headers }
       );
       
-      console.log('📊 סטטוס תגובה עבור Properties:', response.status);
+      console.log('📊 סטטוס תגובה עבור נכסים:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -108,7 +109,7 @@ export class AirtableService {
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
-    const response = await fetch(`${BASE_URL}/Properties`, {
+    const response = await fetch(`${BASE_URL}/נכסים`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -125,7 +126,7 @@ export class AirtableService {
   }
 
   static async updateProperty(id: string, fields: Partial<Property>) {
-    const response = await fetch(`${BASE_URL}/Properties/${id}`, {
+    const response = await fetch(`${BASE_URL}/נכסים/${id}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ fields })
@@ -140,7 +141,7 @@ export class AirtableService {
   }
 
   static async deleteProperty(id: string) {
-    const response = await fetch(`${BASE_URL}/Properties/${id}`, {
+    const response = await fetch(`${BASE_URL}/נכסים/${id}`, {
       method: 'DELETE',
       headers
     });
@@ -150,11 +151,11 @@ export class AirtableService {
     }
   }
 
-  // Posts API
+  // Posts API - שינוי לטבלה "פרסומים"
   static async getPosts(brokerId: string) {
     const filterFormula = `{broker} = '${brokerId}'`;
     const response = await fetch(
-      `${BASE_URL}/Posts?filterByFormula=${encodeURIComponent(filterFormula)}`,
+      `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
     );
     
@@ -170,7 +171,7 @@ export class AirtableService {
   }
 
   static async createPost(post: Omit<Post, 'id'>) {
-    const response = await fetch(`${BASE_URL}/Posts`, {
+    const response = await fetch(`${BASE_URL}/פרסומים`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -187,7 +188,7 @@ export class AirtableService {
   }
 
   static async updatePost(id: string, fields: Partial<Post>) {
-    const response = await fetch(`${BASE_URL}/Posts/${id}`, {
+    const response = await fetch(`${BASE_URL}/פרסומים/${id}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ fields })
@@ -202,7 +203,7 @@ export class AirtableService {
   }
 
   static async deletePost(id: string) {
-    const response = await fetch(`${BASE_URL}/Posts/${id}`, {
+    const response = await fetch(`${BASE_URL}/פרסומים/${id}`, {
       method: 'DELETE',
       headers
     });
@@ -212,11 +213,11 @@ export class AirtableService {
     }
   }
 
-  // Images API
+  // Images API - שינוי לטבלה "תמונות"
   static async getImages(propertyId: string) {
     const filterFormula = `{property} = '${propertyId}'`;
     const response = await fetch(
-      `${BASE_URL}/Images?filterByFormula=${encodeURIComponent(filterFormula)}`,
+      `${BASE_URL}/תמונות?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
     );
     
