@@ -106,6 +106,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     // Create full address from components
     const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
+    console.log('🔄 שולח נכס עם מתווך:', brokerId);
+    
     onSubmit({
       title: formData.title || `${formData.type} ב${formData.neighborhood}`,
       description: formData.description,
@@ -113,7 +115,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       price: formData.price ? Number(formData.price) : 0,
       type: formData.type, // כעת אנחנו יודעים שזה לא ריק
       size: 0,
-      broker: brokerId,
+      broker: brokerId, // וודא שאנחנו מעבירים את ה-brokerId
       createdAt: editProperty?.createdAt || new Date().toISOString(),
       neighborhood: formData.neighborhood,
       city: formData.city,

@@ -24,6 +24,11 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     'קומה': property.floor,
   };
 
+  // הוספת קישור למתווך
+  if (property.broker) {
+    fields['מתווך בעל בלעדיות'] = [property.broker]; // Array format for linked record
+  }
+
   // רק אם יש סוג נכס תקין נוסיף אותו
   if (property.type && property.type.trim() !== '') {
     fields['סוג נכס'] = property.type.trim();
