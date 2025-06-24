@@ -31,7 +31,7 @@ export class AirtableService {
       return false;
     }
     
-    if (!AIRTABLE_BASE_ID.startsWith('app')) {
+    if (AIRTABLE_BASE_ID && !AIRTABLE_BASE_ID.startsWith('app')) {
       console.error('❌ Base ID צריך להתחיל ב-app');
       return false;
     }
