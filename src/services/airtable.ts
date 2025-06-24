@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -284,24 +285,33 @@ export class AirtableService {
     }
   }
 
-  // פונקציה חדשה להעלאת תמונות לטבלת תמונות
+  // פונקציה חדשה להעלאת תמונות לטבלת תמונות - מתוקנת
   static async uploadImageToImagesTable(propertyId: string, imageFile: File, imageName: string) {
     console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
     
     try {
-      // במקום URL זמני, נצטרך להעלות לשירות קבצים אמיתי
-      // לעת עתה נשמור רק את השם ונקשר לנכס
-      const fields = {
-        'שם התמונה': imageName,
+      // יצירת FormData להעלאת התמונה
+      const formData = new FormData();
+      
+      // הכנת אובייקט השדות
+      const fieldsData = {
         'נכסים': [propertyId], // קישור לנכס
-        // 'קישור לתמונה': imageUrl, // נוסיף כשיהיה שירות העלאת קבצים אמיתי
-        // 'תמונות וסרטונים': imageUrl
+        'תמונות וסרטונים': [{
+          filename: imageFile.name,
+          contentType: imageFile.type
+        }]
       };
+      
+      formData.append('fields', JSON.stringify(fieldsData));
+      formData.append('תמונות וסרטונים', imageFile);
       
       const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ fields })
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          // לא נוסיף Content-Type כי הדפדפן יוסיף את זה אוטומטית עם boundary
+        },
+        body: formData
       });
       
       if (!response.ok) {
@@ -319,26 +329,30 @@ export class AirtableService {
     }
   }
 
-  // פונקציה להעלאת מסמך בלעדיות - מתוקנת לפורמט נכון
+  // פונקציה להעלאת מסמך בלעדיות - מתוקנת
   static async uploadExclusivityDocument(propertyId: string, documentFile: File) {
     console.log('📎 מעלה מסמך בלעדיות לנכס:', propertyId);
     
     try {
       // יצירת FormData להעלאת הקובץ
       const formData = new FormData();
-      formData.append('fields', JSON.stringify({
+      
+      // הכנת אובייקט השדות
+      const fieldsData = {
         'מסמך בלעדיות': [{
           filename: documentFile.name,
           contentType: documentFile.type
         }]
-      }));
+      };
+      
+      formData.append('fields', JSON.stringify(fieldsData));
       formData.append('מסמך בלעדיות', documentFile);
       
       const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          // לא נוסיף Content-Type כי הדפדפן יוסיף את זה אוטומatically עם boundary
+          // לא נוסיף Content-Type כי הדפדפן יוסיף את זה אוטומטית עם boundary
         },
         body: formData
       });
