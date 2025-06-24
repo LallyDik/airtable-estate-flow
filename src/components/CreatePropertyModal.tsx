@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     neighborhood: '',
     city: 'חריש',
     street: '',
-    number: '',
     floor: '',
     rooms: '',
     type: '',
@@ -47,7 +45,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           neighborhood: editProperty.neighborhood || '',
           city: editProperty.city || 'חריש',
           street: editProperty.street || '',
-          number: editProperty.number || '',
           floor: editProperty.floor || '',
           rooms: editProperty.rooms || '',
           type: editProperty.type || '',
@@ -65,7 +62,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           neighborhood: '',
           city: 'חריש',
           street: '',
-          number: '',
           floor: '',
           rooms: '',
           type: '',
@@ -100,8 +96,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create full address from components
-    const fullAddress = `${formData.street} ${formData.number}, ${formData.neighborhood}, ${formData.city}`;
+    // Create full address from components (without house number)
+    const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
     onSubmit({
       title: formData.title || `${formData.type} ב${formData.neighborhood}`,
@@ -115,7 +111,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       neighborhood: formData.neighborhood,
       city: formData.city,
       street: formData.street,
-      number: formData.number,
       floor: formData.floor,
       rooms: formData.rooms,
       offersUntil: formData.offersUntil,
@@ -175,24 +170,13 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             </div>
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="street">רחוב</Label>
               <Input
                 id="street"
                 value={formData.street}
                 onChange={(e) => setFormData({...formData, street: e.target.value})}
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="number">מספר</Label>
-              <Input
-                id="number"
-                type="text"
-                value={formData.number}
-                onChange={(e) => setFormData({...formData, number: e.target.value})}
                 required
               />
             </div>
