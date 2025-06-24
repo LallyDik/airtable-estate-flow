@@ -18,20 +18,24 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>) => {
     'שם נכס לתצוגה': property.title,
     'תיאור חופשי לפרסום': property.description,
     'מחיר שיווק': property.price,
-    'סוג נכס': property.type,
     'שכונה': property.neighborhood,
     'עיר': property.city,
     'רחוב': property.street,
     'קומה': property.floor,
   };
 
+  // רק אם יש סוג נכס תקין נוסיף אותו
+  if (property.type && property.type.trim() !== '') {
+    fields['סוג נכס'] = property.type.trim();
+  }
+
   // המרת כמות חדרים למספר אם זה אפשרי, אחרת נשאיר כטקסט
-  if (property.rooms) {
+  if (property.rooms && property.rooms.trim() !== '') {
     const roomsAsNumber = parseFloat(property.rooms);
     if (!isNaN(roomsAsNumber)) {
       fields['כמות חדרים'] = roomsAsNumber;
     } else {
-      fields['כמות חדרים'] = property.rooms;
+      fields['כמות חדרים'] = property.rooms.trim();
     }
   }
 

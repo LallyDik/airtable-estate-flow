@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -104,7 +105,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       description: formData.description,
       address: fullAddress,
       price: formData.price ? Number(formData.price) : 0,
-      type: formData.type,
+      type: formData.type || '', // נוודא שזה לא undefined
       size: 0,
       broker: brokerId,
       createdAt: editProperty?.createdAt || new Date().toISOString(),
