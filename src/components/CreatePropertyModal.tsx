@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -223,10 +222,9 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
               <Label htmlFor="price">מחיר שיווק (₪) *</Label>
               <Input
                 id="price"
-                type="text"
+                type="number"
                 value={formData.price}
                 onChange={(e) => setFormData({...formData, price: e.target.value})}
-                placeholder="הכנס מחיר"
                 required
               />
             </div>
