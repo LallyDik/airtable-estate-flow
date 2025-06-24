@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUp, X, FileImage } from 'lucide-react';
+import { FileUp, X, FileImage, AlertCircle } from 'lucide-react';
 import { Property } from '@/types';
 import { AirtableService } from '@/services/airtable';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CreatePropertyModalProps {
   isOpen: boolean;
@@ -174,18 +174,18 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
 
       const propertyId = propertyResult.id || editProperty?.id;
 
-      // העלאת מסמך בלעדיות אם קיים - עם הפורמט המתוקן
+      // העלאת מסמך בלעדיות אם קיים - עם הודעה על מצב זמני
       if (exclusivityDocument && propertyId) {
         try {
           await AirtableService.uploadExclusivityDocument(propertyId, exclusivityDocument);
-          console.log('✅ מסמך בלעדיות הועלה בהצלחה');
+          console.log('✅ מסמך בלעדיות סומן כהועלה (זמני)');
         } catch (error) {
-          console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
+          console.error('❌ שגיאה בסימון מסמך בלעדיות:', error);
           // לא נעצור את התהליך בגלל שגיאה במסמך
         }
       }
 
-      // העלאת תמונות לטבלת תמונות אם קיימות
+      // העלאת תמונות לטבלת תמונות אם קיימות - עם הודעה על מצב זמני
       if (images.length > 0 && propertyId) {
         try {
           for (let i = 0; i < images.length; i++) {
@@ -193,9 +193,9 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             const imageName = `${formData.title} - תמונה ${i + 1}`;
             await AirtableService.uploadImageToImagesTable(propertyId, image, imageName);
           }
-          console.log('✅ כל התמונות הועלו בהצלחה לטבלת תמונות');
+          console.log('✅ כל התמונות סומנו כהועלו (זמני) לטבלת תמונות');
         } catch (error) {
-          console.error('❌ שגיאה בהעלאת תמונות:', error);
+          console.error('❌ שגיאה בסימון תמונות:', error);
           // לא נעצור את התהליך בגלל שגיאה בתמונות
         }
       }
@@ -228,6 +228,15 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             {editProperty ? 'עריכת נכס' : 'הוספת נכס חדש'}
           </DialogTitle>
         </DialogHeader>
+
+        {/* הוספת התראה על העלאת קבצים זמנית */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            הקבצים והתמונות יסומנו כ"זמניים" עד לחיבור שירות העלאת קבצים חיצוני
+          </AlertDescription>
+        </Alert>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">שם הנכס *</Label>

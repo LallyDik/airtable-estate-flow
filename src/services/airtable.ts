@@ -55,14 +55,6 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
     fields['מוכן לקבל הצעות עד'] = property.offersUntil.trim();
   }
 
-  // הסרת מסמך בלעדיות מכאן - נטפל בו בנפרד
-  // הוספת מסמך בלעדיות אם קיים
-  // if (property.exclusivityDocument && property.exclusivityDocument.trim() !== '') {
-  //   console.log('📎 מוסיף מסמך בלעדיות לשדות:', property.exclusivityDocument);
-  //   // לעת עתה נשמור כטקסט, בעתיד נוכל להעלות לשירות קבצים
-  //   fields['מסמך בלעדיות'] = property.exclusivityDocument;
-  // }
-
   console.log('📝 שדות ליצירת/עדכון נכס:', fields);
   return fields;
 };
@@ -284,16 +276,50 @@ export class AirtableService {
     }
   }
 
-  // פונקציה חדשה להעלאת תמונות לטבלת תמונות - מתוקנת
-  static async uploadImageToImagesTable(propertyId: string, imageFile: File, imageName: string) {
-    console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
+  // פונקציה חדשה להעלאת מסמך בלעדיות - עם סימון זמני
+  static async uploadExclusivityDocument(propertyId: string, documentFile: File) {
+    console.log('📎 מעלה מסמך בלעדיות לנכס:', propertyId);
+    console.log('⚠️ הערה: זהו קישור זמני - יש צורך בשירות העלאת קבצים חיצוני');
     
     try {
-      // נשתמש בגישה רגילה עם JSON במקום FormData
-      // במקום להעלות קובץ אמיתי, נשמור רק את פרטי הקישור
+      // כרגע נעדכן רק עם סימון שהמסמך הועלה
+      const fields = {
+        'מסמך בלעדיות': `זמני - ${documentFile.name} (הועלה ${new Date().toLocaleDateString('he-IL')})`
+      };
+      
+      const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ fields })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', errorData);
+        throw new Error(`Failed to upload exclusivity document: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ מסמך בלעדיות סומן כהועלה:', data);
+      return data;
+      
+    } catch (error) {
+      console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
+      throw error;
+    }
+  }
+
+  // פונקציה להעלאת תמונות לטבלת תמונות - עם קישור זמני
+  static async uploadImageToImagesTable(propertyId: string, imageFile: File, imageName: string) {
+    console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
+    console.log('⚠️ הערה: זהו קישור זמני - יש צורך בשירות העלאת קבצים חיצוני');
+    
+    try {
+      // נשתמש בגישה רגילה עם JSON
+      // כרגע נשמור רק פרטי הקישור הזמני
       const fields = {
         'נכסים': [propertyId], // קישור לנכס
-        'קישור לתמונה': `temp_${Date.now()}_${imageFile.name}` // קישור זמני
+        'קישור לתמונה': `זמני - ${imageFile.name} (הועלה ${new Date().toLocaleDateString('he-IL')})`
       };
       
       const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
@@ -314,38 +340,6 @@ export class AirtableService {
       
     } catch (error) {
       console.error('❌ שגיאה בהעלאת תמונה:', error);
-      throw error;
-    }
-  }
-
-  // פונקציה להעלאת מסמך בלעדיות - גישה פשוטה יותר
-  static async uploadExclusivityDocument(propertyId: string, documentFile: File) {
-    console.log('📎 מעלה מסמך בלעדיות לנכס:', propertyId);
-    
-    try {
-      // נעדכן את הנכס עם רק שם הקובץ כקישור זמני
-      const fields = {
-        'מסמך בלעדיות': `temp_${Date.now()}_${documentFile.name}`
-      };
-      
-      const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ fields })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', errorData);
-        throw new Error(`Failed to upload exclusivity document: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('✅ מסמך בלעדיות הועלה בהצלחה:', data);
-      return data;
-      
-    } catch (error) {
-      console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
       throw error;
     }
   }
