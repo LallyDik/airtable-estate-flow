@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -25,7 +24,7 @@ export interface Property {
   floor?: string;
   rooms?: string;
   offersUntil?: string;
-  exclusivityNumber?: string;
+  exclusivityDocument?: string; // URL to the uploaded document
 }
 
 export interface Post {

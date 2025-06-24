@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileUp, X } from 'lucide-react';
 import { Property } from '@/types';
 
 interface CreatePropertyModalProps {
@@ -28,11 +29,29 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     price: editProperty?.price || 0,
     offersUntil: editProperty?.offersUntil || '',
     description: editProperty?.description || '',
-    exclusivityNumber: editProperty?.exclusivityNumber || '',
     title: editProperty?.title || '',
     address: editProperty?.address || '',
     size: editProperty?.size || 0,
   });
+
+  const [exclusivityDocument, setExclusivityDocument] = useState<File | null>(null);
+  const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>(editProperty?.exclusivityDocument || '');
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setExclusivityDocument(file);
+      // In a real app, you would upload this to a file storage service
+      // For now, we'll create a temporary URL
+      const tempUrl = URL.createObjectURL(file);
+      setExclusivityDocumentUrl(tempUrl);
+    }
+  };
+
+  const removeFile = () => {
+    setExclusivityDocument(null);
+    setExclusivityDocumentUrl('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +75,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       floor: formData.floor,
       rooms: formData.rooms,
       offersUntil: formData.offersUntil,
-      exclusivityNumber: formData.exclusivityNumber,
+      exclusivityDocument: exclusivityDocumentUrl,
     });
     
     // Reset form
@@ -71,11 +90,12 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       price: 0,
       offersUntil: '',
       description: '',
-      exclusivityNumber: '',
       title: '',
       address: '',
       size: 0,
     });
+    setExclusivityDocument(null);
+    setExclusivityDocumentUrl('');
     onClose();
   };
 
@@ -224,13 +244,48 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           </div>
           
           <div>
-            <Label htmlFor="exclusivityNumber">מספר בלעדיות</Label>
-            <Input
-              id="exclusivityNumber"
-              value={formData.exclusivityNumber}
-              onChange={(e) => setFormData({...formData, exclusivityNumber: e.target.value})}
-              placeholder="מספר בלעדיות (אם קיים)"
-            />
+            <Label htmlFor="exclusivityDocument">מסמך בלעדיות</Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              {exclusivityDocumentUrl ? (
+                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FileUp className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm text-gray-700">
+                      {exclusivityDocument?.name || 'מסמך בלעדיות'}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeFile}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <input
+                    type="file"
+                    id="exclusivityDocument"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="exclusivityDocument"
+                    className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    <FileUp className="h-4 w-4" />
+                    העלה מסמך בלעדיות
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2">
+                    PDF, Word, או תמונה
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
