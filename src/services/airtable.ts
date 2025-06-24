@@ -226,7 +226,7 @@ export class AirtableService {
       throw new Error(`לא נמצא מתווך עבור האימייל: ${property.broker}`);
     }
     
-    const airtableFields = mapPropertyToAirtableFields(property, false, brokerRecordId); // false = יצירה חדשה
+    const airtableFields = mapPropertyToAirtableFields(property, false, brokerRecordId);
     console.log('📝 שדות ליצירת נכס:', airtableFields);
     
     const response = await fetch(`${BASE_URL}/נכסים`, {
@@ -251,7 +251,7 @@ export class AirtableService {
   static async updateProperty(id: string, property: Partial<Property>) {
     console.log('📝 מעדכן נכס:', id);
     
-    const airtableFields = mapPropertyToAirtableFields(property as Omit<Property, 'id'>, true); // true = עדכון
+    const airtableFields = mapPropertyToAirtableFields(property as Omit<Property, 'id'>, true);
     console.log('📝 שדות לעדכון נכס:', airtableFields);
     
     const response = await fetch(`${BASE_URL}/נכסים/${id}`, {
@@ -289,14 +289,13 @@ export class AirtableService {
     console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
     
     try {
-      // יצירת URL זמני לתמונה (בפועל כאן צריך להעלות לשירות אחסון קבצים)
-      const imageUrl = URL.createObjectURL(imageFile);
-      
+      // במקום URL זמני, נצטרך להעלות לשירות קבצים אמיתי
+      // לעת עתה נשמור רק את השם ונקשר לנכס
       const fields = {
         'שם התמונה': imageName,
-        'קישור לתמונה': imageUrl,
         'נכסים': [propertyId], // קישור לנכס
-        'תמונות וסרטונים': imageUrl
+        // 'קישור לתמונה': imageUrl, // נוסיף כשיהיה שירות העלאת קבצים אמיתי
+        // 'תמונות וסרטונים': imageUrl
       };
       
       const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
@@ -320,28 +319,28 @@ export class AirtableService {
     }
   }
 
-  // פונקציה להעלאת מסמך בלעדיות
+  // פונקציה להעלאת מסמך בלעדיות - מתוקנת לפורמט נכון
   static async uploadExclusivityDocument(propertyId: string, documentFile: File) {
     console.log('📎 מעלה מסמך בלעדיות לנכס:', propertyId);
     
     try {
-      // יצירת URL זמני למסמך (בפועל כאן צריך להעלות לשירות אחסון קבצים)
-      const documentUrl = URL.createObjectURL(documentFile);
-      
-      // עדכון הנכס עם המסמך כ-attachment object
-      const attachmentObject = {
-        url: documentUrl,
-        filename: documentFile.name
-      };
+      // יצירת FormData להעלאת הקובץ
+      const formData = new FormData();
+      formData.append('fields', JSON.stringify({
+        'מסמך בלעדיות': [{
+          filename: documentFile.name,
+          contentType: documentFile.type
+        }]
+      }));
+      formData.append('מסמך בלעדיות', documentFile);
       
       const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, {
         method: 'PATCH',
-        headers,
-        body: JSON.stringify({
-          fields: {
-            'מסמך בלעדיות': [attachmentObject] // Array of attachment objects
-          }
-        })
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          // לא נוסיף Content-Type כי הדפדפן יוסיף את זה אוטומatically עם boundary
+        },
+        body: formData
       });
       
       if (!response.ok) {

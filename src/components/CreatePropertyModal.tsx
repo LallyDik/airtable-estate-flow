@@ -174,7 +174,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
 
       const propertyId = propertyResult.id || editProperty?.id;
 
-      // העלאת מסמך בלעדיות אם קיים
+      // העלאת מסמך בלעדיות אם קיים - עם הפורמט המתוקן
       if (exclusivityDocument && propertyId) {
         try {
           await AirtableService.uploadExclusivityDocument(propertyId, exclusivityDocument);
@@ -193,7 +193,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             const imageName = `${formData.title} - תמונה ${i + 1}`;
             await AirtableService.uploadImageToImagesTable(propertyId, image, imageName);
           }
-          console.log('✅ כל התמונות הועלו בהצלחה');
+          console.log('✅ כל התמונות הועלו בהצלחה לטבלת תמונות');
         } catch (error) {
           console.error('❌ שגיאה בהעלאת תמונות:', error);
           // לא נעצור את התהליך בגלל שגיאה בתמונות
