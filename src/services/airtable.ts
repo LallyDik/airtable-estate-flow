@@ -1,4 +1,6 @@
 
+import { Property, Post } from '@/types';
+
 const AIRTABLE_BASE_ID = 'YOUR_BASE_ID'; // Replace with your actual Base ID
 const AIRTABLE_API_KEY = 'YOUR_API_KEY'; // Replace with your actual API Key
 
