@@ -87,7 +87,16 @@ export class AirtableService {
       
       const data = await response.json();
       const brokerExists = data.records && data.records.length > 0;
-      console.log(brokerExists ? '✅ מתווך נמצא' : '❌ מתווך לא נמצא');
+      
+      if (brokerExists) {
+        console.log('✅ מתווך נמצא');
+        console.log('📄 פרטי המתווך:', data.records[0]);
+        console.log('📝 שדות המתווך:', data.records[0].fields);
+        console.log('🔑 מפתחות השדות:', Object.keys(data.records[0].fields));
+      } else {
+        console.log('❌ מתווך לא נמצא');
+      }
+      
       return brokerExists;
     } catch (error) {
       console.error('❌ שגיאה בבדיקת מתווך:', error);
