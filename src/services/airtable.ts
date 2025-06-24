@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -13,7 +12,7 @@ const headers = {
 };
 
 // פונקציה למיפוי נתוני הטופס לשדות Airtable
-const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: boolean = false) => {
+const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: boolean = false, brokerRecordId?: string) => {
   const fields: Record<string, any> = {
     'שם נכס לתצוגה': property.title,
     'תיאור חופשי לפרסום': property.description,
@@ -25,8 +24,8 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
   };
 
   // הוספת קישור למתווך רק בעת יצירת נכס חדש, לא בעדכון
-  if (!isUpdate && property.broker) {
-    fields['מתווך בעל בלעדיות'] = [property.broker]; // Array format for linked record
+  if (!isUpdate && brokerRecordId) {
+    fields['מתווך בעל בלעדיות'] = [brokerRecordId]; // Array format for linked record
   }
 
   // רק אם יש סוג נכס תקין נוסיף אותו
@@ -118,6 +117,38 @@ export class AirtableService {
     }));
   }
 
+  // פונקציה חדשה לקבלת Record ID של מתווך לפי אימייל
+  static async getBrokerRecordIdByEmail(email: string): Promise<string | null> {
+    try {
+      console.log('🔍 מחפש מתווך עבור אימייל:', email);
+      
+      const filterFormula = `{אימייל} = '${email}'`;
+      const response = await fetch(
+        `${BASE_URL}/אנשי קשר?filterByFormula=${encodeURIComponent(filterFormula)}`,
+        { headers }
+      );
+      
+      if (!response.ok) {
+        console.error('❌ שגיאה בחיפוש מתווך:', response.status);
+        return null;
+      }
+      
+      const data = await response.json();
+      
+      if (data.records && data.records.length > 0) {
+        const brokerRecordId = data.records[0].id;
+        console.log('✅ נמצא מתווך עם Record ID:', brokerRecordId);
+        return brokerRecordId;
+      } else {
+        console.log('⚠️ לא נמצא מתווך עבור האימייל');
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בחיפוש מתווך:', error);
+      return null;
+    }
+  }
+
   // Properties API - השתמש רק בנוסחה של אימייל מתווך
   static async getProperties(userEmail: string) {
     console.log('🔍 מבקש נכסים עבור אימייל:', userEmail);
@@ -178,7 +209,14 @@ export class AirtableService {
   }
 
   static async createProperty(property: Omit<Property, 'id'>) {
-    const airtableFields = mapPropertyToAirtableFields(property, false); // false = יצירה חדשה
+    // קבלת Record ID של המתווך לפני יצירת הנכס
+    const brokerRecordId = await this.getBrokerRecordIdByEmail(property.broker);
+    
+    if (!brokerRecordId) {
+      throw new Error(`לא נמצא מתווך עבור האימייל: ${property.broker}`);
+    }
+    
+    const airtableFields = mapPropertyToAirtableFields(property, false, brokerRecordId); // false = יצירה חדשה
     console.log('📝 שדות ליצירת נכס:', airtableFields);
     
     const response = await fetch(`${BASE_URL}/נכסים`, {
