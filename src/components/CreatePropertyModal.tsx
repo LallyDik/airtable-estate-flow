@@ -19,6 +19,7 @@ interface CreatePropertyModalProps {
 
 const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId }: CreatePropertyModalProps) => {
   const [formData, setFormData] = useState({
+    title: '',
     neighborhood: '',
     city: 'חריש',
     street: '',
@@ -28,7 +29,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     price: '',
     offersUntil: '',
     description: '',
-    title: '',
     address: '',
   });
 
@@ -43,6 +43,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       if (editProperty) {
         console.log('✏️ מעדכן טופס לעריכה:', editProperty);
         setFormData({
+          title: editProperty.title || '',
           neighborhood: editProperty.neighborhood || '',
           city: 'חריש', // תמיד חריש
           street: editProperty.street || '',
@@ -52,7 +53,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           price: editProperty.price ? editProperty.price.toString() : '',
           offersUntil: editProperty.offersUntil || '',
           description: editProperty.description || '',
-          title: editProperty.title || '',
           address: editProperty.address || '',
         });
         setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
@@ -60,6 +60,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
         console.log('➕ איפוס טופס לנכס חדש');
         // איפוס הטופס כשיוצרים נכס חדש
         setFormData({
+          title: '',
           neighborhood: '',
           city: 'חריש',
           street: '',
@@ -69,7 +70,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           price: '',
           offersUntil: '',
           description: '',
-          title: '',
           address: '',
         });
         setExclusivityDocument(null);
@@ -103,19 +103,25 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
       return;
     }
     
+    // בדיקה ששם הנכס קיים
+    if (!formData.title || formData.title.trim() === '') {
+      alert('יש להזין שם נכס');
+      return;
+    }
+    
     // Create full address from components
     const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
     console.log('🔄 שולח נכס עם מתווך:', brokerId);
     
     onSubmit({
-      title: formData.title || `${formData.type} ב${formData.neighborhood}`,
+      title: formData.title, // משתמש בשם הנכס שהוזן בטופס
       description: formData.description,
       address: fullAddress,
       price: formData.price ? Number(formData.price) : 0,
-      type: formData.type, // כעת אנחנו יודעים שזה לא ריק
+      type: formData.type,
       size: 0,
-      broker: brokerId, // וודא שאנחנו מעבירים את ה-brokerId
+      broker: brokerId,
       createdAt: editProperty?.createdAt || new Date().toISOString(),
       neighborhood: formData.neighborhood,
       city: formData.city,
@@ -149,6 +155,17 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">שם הנכס *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              placeholder="לדוגמה: דירה מהממת עם נוף לפארק"
+              required
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="neighborhood">שכונה</Label>
