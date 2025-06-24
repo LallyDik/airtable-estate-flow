@@ -172,7 +172,7 @@ export class AirtableService {
     }
   }
 
-  // Properties API - עדכון לשימוש ב-Record ID במקום באימייל
+  // Properties API - עדכון עם נוסחאות סינון מורחבות
   static async getProperties(brokerId: string) {
     console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
     
@@ -186,11 +186,20 @@ export class AirtableService {
     // הרצת בדיקת דיבוג
     await this.debugAllProperties();
     
-    // ניסיון מספר נוסחאות סינון
+    // ניסיון נוסחאות סינון מורחבות
     const filterFormulas = [
+      // הנוסחה החדשה שהמשתמש הציע
+      `FIND('${brokerRecordId}', ARRAYJOIN({מתווך בעל בלעדיות}, ',')) > 0`,
+      // נוסחאות קיימות
       `{מתווך בעל בלעדיות} = '${brokerRecordId}'`,
       `FIND('${brokerRecordId}', {מתווך בעל בלעדיות}) > 0`,
-      `ARRAYJOIN({מתווך בעל בלעדיות}) = '${brokerRecordId}'`
+      `ARRAYJOIN({מתווך בעל בלעדיות}) = '${brokerRecordId}'`,
+      // נוסחאות נוספות עם וריאציות שונות
+      `FIND('${brokerRecordId}', CONCATENATE({מתווך בעל בלעדיות})) > 0`,
+      `SEARCH('${brokerRecordId}', ARRAYJOIN({מתווך בעל בלעדיות}, '|')) > 0`,
+      `IF(ISERROR(FIND('${brokerRecordId}', ARRAYJOIN({מתווך בעל בלעדיות}, ','))), FALSE, TRUE)`,
+      // ניסיון עם שדה שם המתווך במקום Record ID
+      `{שם המתווך בעל הבלעדיות} = 'נריה אבודרהם'`
     ];
     
     for (let i = 0; i < filterFormulas.length; i++) {
@@ -213,11 +222,26 @@ export class AirtableService {
         
         const data = await response.json();
         console.log(`✅ נתוני נכסים עבור נוסחה ${i + 1}:`, data);
+        console.log(`📈 מספר נכסים שנמצאו: ${data.records?.length || 0}`);
         
         if (data.records && data.records.length > 0) {
           console.log(`🎉 מצאנו נכסים עם נוסחה ${i + 1}!`);
+          console.log(`🔍 פרטי הנכס הראשון שנמצא:`, data.records[0]);
           return data.records.map((record: any) => ({
             id: record.id,
+            title: record.fields['שם נכס לתצוגה'] || record.fields['שם נכס'] || 'נכס ללא שם',
+            description: record.fields['תיאור חופשי לפרסום'] || '',
+            address: `${record.fields['רחוב'] || ''} ${record.fields['עיר'] || ''}`.trim() || 'כתובת לא זמינה',
+            price: record.fields['מחיר שיווק'] || 0,
+            type: record.fields['סוג נכס'] || 'לא צוין',
+            size: record.fields['שטח'] || 0,
+            broker: brokerId,
+            createdAt: record.fields['create time'] || new Date().toISOString(),
+            rooms: record.fields['כמות חדרים'] || '',
+            neighborhood: record.fields['שכונה'] || '',
+            city: record.fields['עיר'] || '',
+            street: record.fields['רחוב'] || '',
+            floor: record.fields['קומה'] || '',
             ...record.fields
           }));
         }
@@ -228,6 +252,7 @@ export class AirtableService {
     }
     
     console.log('⚠️ לא נמצאו נכסים עם אף אחת מהנוסחאות');
+    console.log('💡 ייתכן שהשדה מתווך בעל בלעדיות מכיל ערכים שונים מהצפוי');
     return [];
   }
 
@@ -274,7 +299,7 @@ export class AirtableService {
     }
   }
 
-  // Posts API - עדכון לשימוש ב-Record ID במקום באימייל
+  // Posts API - עדכון עם נוסחאות סינון מורחבות
   static async getPosts(brokerId: string) {
     // קבלת Record ID של המתווך
     const brokerRecordId = await this.getBrokerRecordId(brokerId);
@@ -283,21 +308,36 @@ export class AirtableService {
       return [];
     }
     
-    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerRecordId}'`;
-    const response = await fetch(
-      `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
-      { headers }
-    );
+    // ניסיון מספר נוסחאות סינון
+    const filterFormulas = [
+      `FIND('${brokerRecordId}', ARRAYJOIN({מתווך בעל בלעדיות}, ',')) > 0`,
+      `{מתווך בעל בלעדיות} = '${brokerRecordId}'`,
+      `FIND('${brokerRecordId}', {מתווך בעל בלעדיות}) > 0`
+    ];
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
+    for (const filterFormula of filterFormulas) {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
+          { headers }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.records && data.records.length > 0) {
+            return data.records.map((record: any) => ({
+              id: record.id,
+              ...record.fields
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('שגיאה בקבלת פרסומים:', error);
+        continue;
+      }
     }
     
-    const data = await response.json();
-    return data.records?.map((record: any) => ({
-      id: record.id,
-      ...record.fields
-    })) || [];
+    return [];
   }
 
   static async createPost(post: Omit<Post, 'id'>) {
