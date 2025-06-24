@@ -108,11 +108,11 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="flex items-center justify-center p-12" dir="rtl">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">טוען נכסים...</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2 text-right">טוען נכסים...</h3>
             <p className="text-gray-600 text-center">
               מתחבר ל-Airtable ומביא את הנכסים שלך
             </p>
@@ -123,13 +123,13 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">הנכסים שלי</h2>
-          <p className="text-gray-600">
-            ניהול וצפייה בכל הנכסים הרשומים עליך ב-Airtable
+        <div className="text-right">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2 text-right">הנכסים שלי</h2>
+          <p className="text-gray-600 text-right">
+            ניהול וצפייה בנכסים שלך
           </p>
         </div>
         <Button 
@@ -158,7 +158,7 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
               placeholder="חיפוש נכסים..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10"
+              className="pr-10 text-right"
             />
           </div>
         </div>
@@ -171,7 +171,7 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
             <div className="rounded-full bg-blue-50 p-4 mb-4">
               <Home className="h-8 w-8 text-blue-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2 text-right">
               טרם הוספת נכסים
             </h3>
             <p className="text-gray-600 text-center mb-6 max-w-md">
@@ -191,7 +191,7 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
         <Card className="w-full">
           <CardContent className="flex flex-col items-center justify-center py-8">
             <AlertCircle className="h-8 w-8 text-gray-400 mb-3" />
-            <p className="text-gray-600">לא נמצאו נכסים התואמים את החיפוש</p>
+            <p className="text-gray-600 text-right">לא נמצאו נכסים התואמים את החיפוש</p>
           </CardContent>
         </Card>
       ) : (

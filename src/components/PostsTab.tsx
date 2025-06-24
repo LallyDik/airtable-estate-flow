@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Calendar, Loader2, AlertCircle, TrendingUp } from 'lucide-react';
@@ -125,11 +124,11 @@ const PostsTab = ({ user }: PostsTabProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="flex items-center justify-center p-12" dir="rtl">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">טוען פרסומים...</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2 text-right">טוען פרסומים...</h3>
             <p className="text-gray-600 text-center">
               מתחבר ל-Airtable ומביא את הפרסומים שלך
             </p>
@@ -140,13 +139,13 @@ const PostsTab = ({ user }: PostsTabProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">הפרסומים שלי</h2>
-          <p className="text-gray-600">
-            ניהול וצפייה בכל הפרסומים שלך ב-Airtable
+        <div className="text-right">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2 text-right">הפרסומים שלי</h2>
+          <p className="text-gray-600 text-right">
+            ניהול וצפייה בכל הפרסומים שלך
           </p>
         </div>
         <Button 
@@ -165,15 +164,15 @@ const PostsTab = ({ user }: PostsTabProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">פרסומים היום</p>
+              <div className="text-right">
+                <p className="text-sm text-gray-600 text-right">פרסומים היום</p>
                 <p className="text-2xl font-bold text-gray-800">{todayPosts}/2</p>
               </div>
               <div className="rounded-full bg-blue-50 p-3">
                 <Calendar className="h-5 w-5 text-blue-600" />
               </div>
             </div>
-            <div className="mt-2">
+            <div className="mt-2 text-right">
               <Badge variant={todayPosts >= 2 ? "destructive" : "secondary"}>
                 {todayPosts >= 2 ? "הגעת למגבלה" : `נותרו ${2 - todayPosts}`}
               </Badge>
@@ -184,8 +183,8 @@ const PostsTab = ({ user }: PostsTabProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">סה"כ פרסומים</p>
+              <div className="text-right">
+                <p className="text-sm text-gray-600 text-right">סה"כ פרסומים</p>
                 <p className="text-2xl font-bold text-gray-800">{totalPosts}</p>
               </div>
               <div className="rounded-full bg-green-50 p-3">
@@ -198,8 +197,8 @@ const PostsTab = ({ user }: PostsTabProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">נכסים זמינים</p>
+              <div className="text-right">
+                <p className="text-sm text-gray-600 text-right">נכסים זמינים</p>
                 <p className="text-2xl font-bold text-gray-800">{properties.length}</p>
               </div>
               <div className="rounded-full bg-purple-50 p-3">
@@ -216,7 +215,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <p className="text-yellow-800 font-medium">
+              <p className="text-yellow-800 font-medium text-right">
                 יש להוסיף נכסים לפני יצירת פרסומים
               </p>
             </div>
@@ -229,7 +228,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-red-600" />
-              <p className="text-red-800 font-medium">
+              <p className="text-red-800 font-medium text-right">
                 הגעת למגבלת 2 פרסומים ביום. נסה שוב מחר.
               </p>
             </div>
@@ -244,7 +243,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
             <div className="rounded-full bg-green-50 p-4 mb-4">
               <Calendar className="h-8 w-8 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2 text-right">
               טרם יצרת פרסומים
             </h3>
             <p className="text-gray-600 text-center mb-6 max-w-md">
