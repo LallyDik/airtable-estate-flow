@@ -344,12 +344,43 @@ export class AirtableService {
     }
   }
 
-  // Posts API - שימוש בשדה אימייל ישירות
+  // פונקציה חדשה לקבלת שמות השדות מטבלת פרסומי נכסים
+  static async getPostsTableFields() {
+    console.log('🔍 מקבל שמות שדות מטבלת פרסומי נכסים...');
+    
+    try {
+      // נקבל רשומה אחת כדי לראות את שמות השדות
+      const response = await fetch(`${BASE_URL}/פרסומי נכסים?maxRecords=1`, { headers });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ שגיאה בקבלת שדות הטבלה:', errorText);
+        throw new Error(`Failed to fetch table fields: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ נתוני טבלת פרסומי נכסים:', data);
+      
+      if (data.records && data.records.length > 0) {
+        const fields = Object.keys(data.records[0].fields);
+        console.log('📋 שמות השדות בטבלת פרסומי נכסים:', fields);
+        return fields;
+      } else {
+        console.log('⚠️ לא נמצאו רשומות בטבלת פרסומי נכסים');
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בקבלת שדות טבלת פרסומי נכסים:', error);
+      throw error;
+    }
+  }
+
+  // Posts API - עדכון לטבלה "פרסומי נכסים"
   static async getPosts(userEmail: string) {
     try {
       const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${userEmail}'`;
       const response = await fetch(
-        `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
+        `${BASE_URL}/פרסומי נכסים?filterByFormula=${encodeURIComponent(filterFormula)}`,
         { headers }
       );
       
@@ -370,7 +401,7 @@ export class AirtableService {
   }
 
   static async createPost(post: Omit<Post, 'id'>) {
-    const response = await fetch(`${BASE_URL}/פרסומים`, {
+    const response = await fetch(`${BASE_URL}/פרסומי נכסים`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -387,7 +418,7 @@ export class AirtableService {
   }
 
   static async updatePost(id: string, fields: Partial<Post>) {
-    const response = await fetch(`${BASE_URL}/פרסומים/${id}`, {
+    const response = await fetch(`${BASE_URL}/פרסומי נכסים/${id}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ fields })
@@ -402,7 +433,7 @@ export class AirtableService {
   }
 
   static async deletePost(id: string) {
-    const response = await fetch(`${BASE_URL}/פרסומים/${id}`, {
+    const response = await fetch(`${BASE_URL}/פרסומי נכסים/${id}`, {
       method: 'DELETE',
       headers
     });
