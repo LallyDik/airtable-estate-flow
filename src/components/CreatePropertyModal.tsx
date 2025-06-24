@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUp, X, Upload, FileImage } from 'lucide-react';
+import { FileUp, X, FileImage } from 'lucide-react';
 import { Property } from '@/types';
 
 interface CreatePropertyModalProps {
@@ -390,13 +390,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
                 <p className="text-sm text-gray-600 mt-2">ניתן לבחור מספר תמונות</p>
               </div>
             </div>
-          </div>
-          
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <Button type="button" variant="outline" className="mb-2">
-              הוסף +
-            </Button>
-            <p className="text-sm text-gray-600">תמונות / סרטונים</p>
           </div>
           
           <div className="flex gap-2 pt-4">
