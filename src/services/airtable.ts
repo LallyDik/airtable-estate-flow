@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -70,6 +69,39 @@ export class AirtableService {
     }));
   }
 
+  // בדיקה שהמתווך קיים בטבלת אנשי קשר וקבלת ה-Record ID שלו
+  static async getBrokerRecordId(brokerId: string) {
+    console.log('🔍 מקבל Record ID עבור מתווך:', brokerId);
+    try {
+      const filterFormula = `{אימייל} = '${brokerId}'`;
+      const response = await fetch(
+        `${BASE_URL}/אנשי קשר?filterByFormula=${encodeURIComponent(filterFormula)}`,
+        { headers }
+      );
+      
+      if (!response.ok) {
+        console.error('❌ שגיאה בקבלת Record ID של מתווך:', response.status);
+        return null;
+      }
+      
+      const data = await response.json();
+      if (data.records && data.records.length > 0) {
+        const recordId = data.records[0].id;
+        console.log('✅ Record ID של המתווך:', recordId);
+        console.log('📄 פרטי המתווך מטבלת אנשי קשר:', data.records[0]);
+        console.log('📝 שדות המתווך מטבלת אנשי קשר:', data.records[0].fields);
+        console.log('🔑 מפתחות השדות בטבלת אנשי קשר:', Object.keys(data.records[0].fields));
+        return recordId;
+      } else {
+        console.log('❌ מתווך לא נמצא בטבלת אנשי קשר');
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בקבלת Record ID של מתווך:', error);
+      return null;
+    }
+  }
+
   // בדיקה שהמתווך קיים בטבלת אנשי קשר
   static async verifyBrokerExists(brokerId: string) {
     console.log('🔍 בודק שהמתווך קיים:', brokerId);
@@ -129,22 +161,23 @@ export class AirtableService {
     }
   }
 
-  // Properties API - שינוי לטבלה "נכסים" ושדה "מתווך בעל בלעדיות"
+  // Properties API - עדכון לשימוש ב-Record ID במקום באימייל
   static async getProperties(brokerId: string) {
     console.log('🔍 מבקש נכסים עבור ברוקר:', brokerId);
     
-    // בדיקה שהמתווך קיים
-    const brokerExists = await this.verifyBrokerExists(brokerId);
-    if (!brokerExists) {
-      console.warn('⚠️ מתווך לא נמצא בטבלת אנשי קשר');
+    // קבלת Record ID של המתווך
+    const brokerRecordId = await this.getBrokerRecordId(brokerId);
+    if (!brokerRecordId) {
+      console.warn('⚠️ לא ניתן לקבל Record ID של המתווך');
       return [];
     }
     
     // הרצת בדיקת דיבוג
     await this.debugAllProperties();
     
-    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerId}'`;
-    console.log('📝 נוסחת סינון:', filterFormula);
+    // שינוי הסינון לשימוש ב-Record ID
+    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerRecordId}'`;
+    console.log('📝 נוסחת סינון חדשה (עם Record ID):', filterFormula);
     
     try {
       const response = await fetch(
@@ -221,16 +254,16 @@ export class AirtableService {
     }
   }
 
-  // Posts API - שינוי לטבלה "פרסומים" ושדה "מתווך בעל בלעדיות"
+  // Posts API - עדכון לשימוש ב-Record ID במקום באימייל
   static async getPosts(brokerId: string) {
-    // בדיקה שהמתווך קיים
-    const brokerExists = await this.verifyBrokerExists(brokerId);
-    if (!brokerExists) {
-      console.warn('⚠️ מתווך לא נמצא בטבלת אנשי קשר');
+    // קבלת Record ID של המתווך
+    const brokerRecordId = await this.getBrokerRecordId(brokerId);
+    if (!brokerRecordId) {
+      console.warn('⚠️ לא ניתן לקבל Record ID של המתווך');
       return [];
     }
     
-    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerId}'`;
+    const filterFormula = `{מתווך בעל בלעדיות} = '${brokerRecordId}'`;
     const response = await fetch(
       `${BASE_URL}/פרסומים?filterByFormula=${encodeURIComponent(filterFormula)}`,
       { headers }
