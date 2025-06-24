@@ -55,12 +55,13 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
     fields['מוכן לקבל הצעות עד'] = property.offersUntil.trim();
   }
 
+  // הסרת מסמך בלעדיות מכאן - נטפל בו בנפרד
   // הוספת מסמך בלעדיות אם קיים
-  if (property.exclusivityDocument && property.exclusivityDocument.trim() !== '') {
-    console.log('📎 מוסיף מסמך בלעדיות לשדות:', property.exclusivityDocument);
-    // לעת עתה נשמור כטקסט, בעתיד נוכל להעלות לשירות קבצים
-    fields['מסמך בלעדיות'] = property.exclusivityDocument;
-  }
+  // if (property.exclusivityDocument && property.exclusivityDocument.trim() !== '') {
+  //   console.log('📎 מוסיף מסמך בלעדיות לשדות:', property.exclusivityDocument);
+  //   // לעת עתה נשמור כטקסט, בעתיד נוכל להעלות לשירות קבצים
+  //   fields['מסמך בלעדיות'] = property.exclusivityDocument;
+  // }
 
   console.log('📝 שדות ליצירת/עדכון נכס:', fields);
   return fields;
@@ -280,6 +281,81 @@ export class AirtableService {
     
     if (!response.ok) {
       throw new Error(`Failed to delete property: ${response.status} ${response.statusText}`);
+    }
+  }
+
+  // פונקציה חדשה להעלאת תמונות לטבלת תמונות
+  static async uploadImageToImagesTable(propertyId: string, imageFile: File, imageName: string) {
+    console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
+    
+    try {
+      // יצירת URL זמני לתמונה (בפועל כאן צריך להעלות לשירות אחסון קבצים)
+      const imageUrl = URL.createObjectURL(imageFile);
+      
+      const fields = {
+        'שם התמונה': imageName,
+        'קישור לתמונה': imageUrl,
+        'נכסים': [propertyId], // קישור לנכס
+        'תמונות וסרטונים': imageUrl
+      };
+      
+      const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ fields })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ שגיאה בהעלאת תמונה:', errorText);
+        throw new Error(`Failed to upload image: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ תמונה הועלתה בהצלחה:', data.id);
+      return { id: data.id, ...data.fields };
+    } catch (error) {
+      console.error('❌ שגיאה בהעלאת תמונה:', error);
+      throw error;
+    }
+  }
+
+  // פונקציה להעלאת מסמך בלעדיות
+  static async uploadExclusivityDocument(propertyId: string, documentFile: File) {
+    console.log('📎 מעלה מסמך בלעדיות לנכס:', propertyId);
+    
+    try {
+      // יצירת URL זמני למסמך (בפועל כאן צריך להעלות לשירות אחסון קבצים)
+      const documentUrl = URL.createObjectURL(documentFile);
+      
+      // עדכון הנכס עם המסמך כ-attachment object
+      const attachmentObject = {
+        url: documentUrl,
+        filename: documentFile.name
+      };
+      
+      const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          fields: {
+            'מסמך בלעדיות': [attachmentObject] // Array of attachment objects
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', errorText);
+        throw new Error(`Failed to upload exclusivity document: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ מסמך בלעדיות הועלה בהצלחה');
+      return data;
+    } catch (error) {
+      console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
+      throw error;
     }
   }
 

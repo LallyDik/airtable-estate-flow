@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileUp, X, FileImage } from 'lucide-react';
 import { Property } from '@/types';
+import { AirtableService } from '@/services/airtable';
 
 interface CreatePropertyModalProps {
   isOpen: boolean;
@@ -120,7 +122,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     setImageUrls(prevUrls => prevUrls.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // בדיקה שסוג נכס נבחר
@@ -142,25 +144,69 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     console.log('📎 מסמך בלעדיות:', exclusivityDocument?.name || 'אין');
     console.log('🖼️ מספר תמונות:', images.length);
     
-    onSubmit({
-      title: formData.title, // משתמש בשם הנכס שהוזן בטופס
-      description: formData.description,
-      address: fullAddress,
-      price: formData.price ? Number(formData.price) : 0,
-      type: formData.type,
-      size: 0,
-      broker: brokerId,
-      createdAt: editProperty?.createdAt || new Date().toISOString(),
-      neighborhood: formData.neighborhood,
-      city: formData.city,
-      street: formData.street,
-      floor: formData.floor,
-      rooms: formData.rooms,
-      offersUntil: formData.offersUntil,
-      exclusivityDocument: exclusivityDocumentUrl,
-    });
-    
-    onClose();
+    try {
+      // יצירת/עדכון הנכס בלי התמונות והמסמך
+      const propertyData = {
+        title: formData.title,
+        description: formData.description,
+        address: fullAddress,
+        price: formData.price ? Number(formData.price) : 0,
+        type: formData.type,
+        size: 0,
+        broker: brokerId,
+        createdAt: editProperty?.createdAt || new Date().toISOString(),
+        neighborhood: formData.neighborhood,
+        city: formData.city,
+        street: formData.street,
+        floor: formData.floor,
+        rooms: formData.rooms,
+        offersUntil: formData.offersUntil,
+        exclusivityDocument: '', // נעדכן בנפרד
+      };
+
+      // יצירת/עדכון הנכס
+      let propertyResult;
+      if (editProperty) {
+        propertyResult = await AirtableService.updateProperty(editProperty.id, propertyData);
+      } else {
+        propertyResult = await AirtableService.createProperty(propertyData);
+      }
+
+      const propertyId = propertyResult.id || editProperty?.id;
+
+      // העלאת מסמך בלעדיות אם קיים
+      if (exclusivityDocument && propertyId) {
+        try {
+          await AirtableService.uploadExclusivityDocument(propertyId, exclusivityDocument);
+          console.log('✅ מסמך בלעדיות הועלה בהצלחה');
+        } catch (error) {
+          console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
+          // לא נעצור את התהליך בגלל שגיאה במסמך
+        }
+      }
+
+      // העלאת תמונות לטבלת תמונות אם קיימות
+      if (images.length > 0 && propertyId) {
+        try {
+          for (let i = 0; i < images.length; i++) {
+            const image = images[i];
+            const imageName = `${formData.title} - תמונה ${i + 1}`;
+            await AirtableService.uploadImageToImagesTable(propertyId, image, imageName);
+          }
+          console.log('✅ כל התמונות הועלו בהצלחה');
+        } catch (error) {
+          console.error('❌ שגיאה בהעלאת תמונות:', error);
+          // לא נעצור את התהליך בגלל שגיאה בתמונות
+        }
+      }
+
+      // קריאה לפונקציה המקורית
+      onSubmit(propertyData);
+      onClose();
+    } catch (error) {
+      console.error('❌ שגיאה בשמירת נכס:', error);
+      alert('שגיאה בשמירת הנכס. נסה שנית.');
+    }
   };
 
   const propertyTypes = [
