@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -290,82 +289,61 @@ export class AirtableService {
     console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
     
     try {
-      // יצירת FormData להעלאת התמונה
-      const formData = new FormData();
-      
-      // הכנת אובייקט השדות
-      const fieldsData = {
+      // נשתמש בגישה רגילה עם JSON במקום FormData
+      // במקום להעלות קובץ אמיתי, נשמור רק את פרטי הקישור
+      const fields = {
         'נכסים': [propertyId], // קישור לנכס
-        'תמונות וסרטונים': [{
-          filename: imageFile.name,
-          contentType: imageFile.type
-        }]
+        'קישור לתמונה': `temp_${Date.now()}_${imageFile.name}` // קישור זמני
       };
-      
-      formData.append('fields', JSON.stringify(fieldsData));
-      formData.append('תמונות וסרטונים', imageFile);
       
       const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          // לא נוסיף Content-Type כי הדפדפן יוסיף את זה אוטומטית עם boundary
-        },
-        body: formData
+        headers,
+        body: JSON.stringify({ fields })
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ שגיאה בהעלאת תמונה:', errorText);
+        const errorData = await response.json();
+        console.error('❌ שגיאה בהעלאת תמונה:', errorData);
         throw new Error(`Failed to upload image: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('✅ תמונה הועלתה בהצלחה:', data.id);
-      return { id: data.id, ...data.fields };
+      console.log('✅ תמונה הועלה בהצלחה לטבלת תמונות:', data);
+      return data;
+      
     } catch (error) {
       console.error('❌ שגיאה בהעלאת תמונה:', error);
       throw error;
     }
   }
 
-  // פונקציה להעלאת מסמך בלעדיות - מתוקנת
+  // פונקציה להעלאת מסמך בלעדיות - גישה פשוטה יותר
   static async uploadExclusivityDocument(propertyId: string, documentFile: File) {
     console.log('📎 מעלה מסמך בלעדיות לנכס:', propertyId);
     
     try {
-      // יצירת FormData להעלאת הקובץ
-      const formData = new FormData();
-      
-      // הכנת אובייקט השדות
-      const fieldsData = {
-        'מסמך בלעדיות': [{
-          filename: documentFile.name,
-          contentType: documentFile.type
-        }]
+      // נעדכן את הנכס עם רק שם הקובץ כקישור זמני
+      const fields = {
+        'מסמך בלעדיות': `temp_${Date.now()}_${documentFile.name}`
       };
-      
-      formData.append('fields', JSON.stringify(fieldsData));
-      formData.append('מסמך בלעדיות', documentFile);
       
       const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          // לא נוסיף Content-Type כי הדפדפן יוסיף את זה אוטומטית עם boundary
-        },
-        body: formData
+        headers,
+        body: JSON.stringify({ fields })
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', errorText);
+        const errorData = await response.json();
+        console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', errorData);
         throw new Error(`Failed to upload exclusivity document: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('✅ מסמך בלעדיות הועלה בהצלחה');
+      console.log('✅ מסמך בלעדיות הועלה בהצלחה:', data);
       return data;
+      
     } catch (error) {
       console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
       throw error;

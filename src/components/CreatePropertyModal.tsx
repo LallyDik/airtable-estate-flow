@@ -252,13 +252,19 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
             </div>
             
             <div>
-              <Label htmlFor="city">עיר</Label>
-              <Input
-                id="city"
-                value="חריש"
-                readOnly
-                className="bg-gray-100"
-              />
+              <Label htmlFor="city">עיר *</Label>
+              <Select 
+                value={formData.city} 
+                onValueChange={(value) => setFormData({...formData, city: value})}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר עיר" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="חריש">חריש</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
