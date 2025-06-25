@@ -446,6 +446,24 @@ export class AirtableService {
           console.log('📈 מספר פרסומים של המתווך:', userPosts.length);
           
           return userPosts.map((record: any) => {
+            // נקבל את שם הנכס מהשדה המחושב או משדה הקישור
+            let propertyTitle = 'נכס';
+            
+            // ננסה למצוא את שם הנכס
+            if (record.fields['שם נכס (from נכסים לפרסום)']) {
+              if (Array.isArray(record.fields['שם נכס (from נכסים לפרסום)'])) {
+                propertyTitle = record.fields['שם נכס (from נכסים לפרסום)'][0];
+              } else {
+                propertyTitle = record.fields['שם נכס (from נכסים לפרסום)'];
+              }
+            } else if (record.fields['שם נכס לתצוגה (from נכסים לפרסום)']) {
+              if (Array.isArray(record.fields['שם נכס לתצוגה (from נכסים לפרסום)'])) {
+                propertyTitle = record.fields['שם נכס לתצוגה (from נכסים לפרסום)'][0];
+              } else {
+                propertyTitle = record.fields['שם נכס לתצוגה (from נכסים לפרסום)'];
+              }
+            }
+            
             const postData = {
               id: record.id,
               property: record.fields['נכסים לפרסום'] ? record.fields['נכסים לפרסום'][0] : '',
@@ -453,7 +471,7 @@ export class AirtableService {
               timeSlot: this.mapTimeSlotFromAirtable(record.fields['זמן פרסום']),
               broker: userEmail,
               createdAt: record.createdTime || new Date().toISOString(),
-              propertyTitle: record.fields['שם נכס (from נכסים לפרסום)'] || 'נכס'
+              propertyTitle: propertyTitle
             };
             console.log('📝 פרסום נמצא:', postData);
             return postData;
@@ -577,22 +595,49 @@ export class AirtableService {
       }
       
       const data = await response.json();
-      console.log('✅ נתוני תמונות:', data);
+      console.log('✅ נתוני תמונות גולמיים:', data);
       
-      return data.records?.map((record: any) => {
+      if (!data.records) {
+        console.log('⚠️ לא נמצאו רשומות תמונות');
+        return [];
+      }
+      
+      const processedImages = data.records.map((record: any) => {
+        console.log('🖼️ מעבד תמונה:', record.fields);
+        
+        let imageUrl = '';
+        let thumbnails = null;
+        
+        // בדיקת שדה תמונה מסוג Attachment
+        if (record.fields['תמונה'] && Array.isArray(record.fields['תמונה']) && record.fields['תמונה'].length > 0) {
+          const attachment = record.fields['תמונה'][0];
+          imageUrl = attachment.url;
+          thumbnails = attachment.thumbnails || null;
+          console.log('🖼️ נמצאה תמונה מסוג Attachment:', imageUrl);
+        }
+        // בדיקת שדה קישור לתמונה
+        else if (record.fields['קישור לתמונה']) {
+          imageUrl = record.fields['קישור לתמונה'];
+          console.log('🖼️ נמצא קישור לתמונה:', imageUrl);
+        }
+        
         const imageData = {
           id: record.id,
-          url: record.fields['קישור לתמונה'] || record.fields['תמונה'] || '',
+          url: imageUrl,
           filename: record.fields['שם קובץ'] || 'תמונה',
-          thumbnails: record.fields['תמונה'] ? {
-            small: { url: record.fields['תמונה'] },
-            large: { url: record.fields['תמונה'] }
-          } : null,
+          thumbnails: thumbnails,
           ...record.fields
         };
-        console.log('🖼️ תמונה נמצאה:', imageData);
+        
+        console.log('🖼️ תמונה מעובדת:', imageData);
         return imageData;
-      }) || [];
+      });
+      
+      // סינון תמונות עם URL תקין
+      const validImages = processedImages.filter(img => img.url && img.url.trim() !== '');
+      console.log('✅ תמונות תקינות:', validImages.length, 'מתוך', processedImages.length);
+      
+      return validImages;
     } catch (error) {
       console.error('❌ שגיאה בקבלת תמונות:', error);
       return [];
@@ -604,7 +649,7 @@ export class AirtableService {
     console.log('📄 מבקש מסמכים עבור נכס:', propertyId);
     
     try {
-      // For now, we'll return the exclusivity document from the property record
+      // נקבל את פרטי הנכס כדי לבדוק אם יש מסמך בלעדיות
       const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, { headers });
       
       if (!response.ok) {
@@ -613,18 +658,35 @@ export class AirtableService {
       }
       
       const data = await response.json();
-      console.log('📄 נתוני מסמכים:', data.fields);
+      console.log('📄 נתוני נכס למסמכים:', data.fields);
       const documents = [];
       
-      // Add exclusivity document if exists
+      // בדיקה אם יש מסמך בלעדיות
       if (data.fields['מסמך בלעדיות']) {
-        documents.push({
-          id: 'exclusivity',
-          name: 'מסמך בלעדיות',
-          url: data.fields['מסמך בלעדיות'],
-          filename: 'מסמך בלעדיות',
-          type: 'document'
-        });
+        const exclusivityDoc = data.fields['מסמך בלעדיות'];
+        
+        // אם זה מערך של קבצים מצורפים
+        if (Array.isArray(exclusivityDoc) && exclusivityDoc.length > 0) {
+          exclusivityDoc.forEach((doc, index) => {
+            documents.push({
+              id: `exclusivity-${index}`,
+              name: 'מסמך בלעדיות',
+              url: doc.url,
+              filename: doc.filename || 'מסמך בלעדיות',
+              type: 'document'
+            });
+          });
+        }
+        // אם זה קישור טקסט
+        else if (typeof exclusivityDoc === 'string' && exclusivityDoc.trim() !== '') {
+          documents.push({
+            id: 'exclusivity',
+            name: 'מסמך בלעדיות',
+            url: exclusivityDoc,
+            filename: 'מסמך בלעדיות',
+            type: 'document'
+          });
+        }
       }
       
       console.log('✅ מסמכים נמצאו:', documents.length);

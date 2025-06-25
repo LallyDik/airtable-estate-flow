@@ -11,7 +11,7 @@ interface PostCardProps {
   onEdit: (post: Post) => void;
   onDelete: (id: string) => void;
   onViewProperty?: (propertyId: string) => void;
-  properties?: any[]; // הוספת רשימת נכסים כדי לקבל את השם הנכון
+  properties?: any[];
 }
 
 const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: PostCardProps) => {
@@ -33,29 +33,35 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
     action();
   };
 
-  // Get the property title with proper fallback
+  // Get the property title with better fallback logic
   const getPropertyTitle = () => {
     console.log('PostCard - Getting property title for post:', post);
-    console.log('PostCard - Properties available:', properties);
+    console.log('PostCard - Post property ID:', post.property);
+    console.log('PostCard - Post propertyTitle:', post.propertyTitle);
+    console.log('PostCard - Properties available:', properties?.length || 0);
     
-    // קודם נחפש לפי propertyTitle שנשמר בפרסום
-    if (post.propertyTitle && post.propertyTitle.trim() && post.propertyTitle !== 'נכס') {
+    // First try to use propertyTitle from the post if it exists and is meaningful
+    if (post.propertyTitle && 
+        post.propertyTitle.trim() && 
+        post.propertyTitle !== 'נכס' && 
+        !post.propertyTitle.includes('rec')) {
       console.log('PostCard - Using propertyTitle from post:', post.propertyTitle);
       return post.propertyTitle;
     }
     
-    // אם לא, נחפש את הנכס ברשימת הנכסים
+    // Then try to find the property in the properties list
     if (properties && properties.length > 0 && post.property) {
       const property = properties.find(p => p.id === post.property);
-      if (property && property.title) {
-        console.log('PostCard - Found property in list:', property.title);
+      console.log('PostCard - Found property in list:', property);
+      if (property && property.title && property.title.trim()) {
+        console.log('PostCard - Using property title from list:', property.title);
         return property.title;
       }
     }
     
-    // אחרת נשתמש בכותרת ברירת מחדל
-    console.log('PostCard - Using fallback title for property:', post.property);
-    return `נכס ${post.property}`;
+    // Fallback to a generic title
+    console.log('PostCard - Using fallback title');
+    return 'נכס לפרסום';
   };
 
   return (

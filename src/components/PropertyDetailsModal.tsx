@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,6 @@ import {
   Loader2,
   X,
   Download,
-  ExternalLink,
   Eye
 } from 'lucide-react';
 
@@ -36,7 +36,6 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
 
   useEffect(() => {
     if (isOpen && propertyId) {
@@ -54,7 +53,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
       console.log('🏠 נכס נמצא:', foundProperty);
       setProperty(foundProperty || null);
 
-      // טען תמונות ומסמכים אם יש
+      // טען תמונות ומסמכים
       try {
         console.log('📂 טוען תמונות ומסמכים...');
         const [imagesData, documentsData] = await Promise.all([
@@ -67,9 +66,18 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
             return [];
           }) || []
         ]);
+        
         console.log('🖼️ תמונות שנטענו:', imagesData);
         console.log('📄 מסמכים שנטענו:', documentsData);
-        setImages(imagesData);
+        
+        // סינון תמונות תקינות
+        const validImages = imagesData.filter(img => {
+          const hasValidUrl = img.url || (img.thumbnails && img.thumbnails.small && img.thumbnails.small.url);
+          console.log('🖼️ בודק תמונה:', img, 'תקינה:', hasValidUrl);
+          return hasValidUrl;
+        });
+        
+        setImages(validImages);
         setDocuments(documentsData);
       } catch (error) {
         console.log('שגיאה בטעינת קבצים:', error);
@@ -91,22 +99,27 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
   };
 
   const handleImageClick = (image: any) => {
-    setSelectedImage(image.url || image.thumbnails?.large?.url || null);
-  };
-
-  const handleDocumentClick = (document: any) => {
-    setSelectedDocument(document);
+    const imageUrl = image.url || (image.thumbnails && image.thumbnails.large && image.thumbnails.large.url) || (image.thumbnails && image.thumbnails.small && image.thumbnails.small.url);
+    console.log('🖼️ לוחץ על תמונה:', imageUrl);
+    setSelectedImage(imageUrl);
   };
 
   const viewDocument = (document: any) => {
+    console.log('📄 צופה במסמך:', document);
     if (document.url) {
       window.open(document.url, '_blank');
     }
   };
 
   const downloadDocument = (document: any) => {
+    console.log('📄 מוריד מסמך:', document);
     if (document.url) {
-      window.open(document.url, '_blank');
+      const link = document.createElement('a');
+      link.href = document.url;
+      link.download = document.filename || document.name || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -248,7 +261,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               </Card>
             )}
 
-            {/* מסמכים */}
+            {/* מסמכים - הצגה מותנית ללא כפילות */}
             {(documents.length > 0 || property.exclusivityDocument) && (
               <Card>
                 <CardContent className="p-4">
@@ -257,7 +270,8 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                     מסמכים
                   </h3>
                   <div className="space-y-2">
-                    {property.exclusivityDocument && (
+                    {/* מסמך בלעדיות - רק אם אין בתוך documents */}
+                    {property.exclusivityDocument && !documents.some(doc => doc.id === 'exclusivity') && (
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-blue-600" />
@@ -275,7 +289,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => downloadDocument({ name: 'מסמך בלעדיות', url: property.exclusivityDocument })}
+                            onClick={() => downloadDocument({ name: 'מסמך בלעדיות', url: property.exclusivityDocument, filename: 'מסמך בלעדיות.pdf' })}
                           >
                             <Download className="h-4 w-4 ml-1" />
                             הורדה
@@ -283,11 +297,13 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                         </div>
                       </div>
                     )}
+                    
+                    {/* מסמכים נוספים */}
                     {documents.map((doc, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium">{doc.filename || `מסמך ${index + 1}`}</span>
+                          <span className="text-sm font-medium">{doc.filename || doc.name || `מסמך ${index + 1}`}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button 
@@ -324,34 +340,37 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                   </h3>
                   <Carousel className="w-full max-w-5xl mx-auto">
                     <CarouselContent>
-                      {images.map((image, index) => (
-                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                          <div 
-                            className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
-                            onClick={() => handleImageClick(image)}
-                          >
-                            {image.url || image.thumbnails?.small?.url ? (
-                              <img 
-                                src={image.url || image.thumbnails.small.url} 
-                                alt={`תמונה ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  console.error('שגיאה בטעינת תמונה:', image);
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <ImageIcon className="h-8 w-8 text-gray-400" />
-                                <span className="text-xs text-gray-500 mt-2">תמונה לא זמינה</span>
+                      {images.map((image, index) => {
+                        const imageUrl = image.url || (image.thumbnails && image.thumbnails.small && image.thumbnails.small.url);
+                        return (
+                          <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                            <div 
+                              className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
+                              onClick={() => handleImageClick(image)}
+                            >
+                              {imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={`תמונה ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error('שגיאה בטעינת תמונה:', image);
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                  <ImageIcon className="h-8 w-8 text-gray-400" />
+                                  <span className="text-xs text-gray-500 mt-2">תמונה לא זמינה</span>
+                                </div>
+                              )}
+                              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
+                                תמונה {index + 1}
                               </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
-                              תמונה {index + 1}
                             </div>
-                          </div>
-                        </CarouselItem>
-                      ))}
+                          </CarouselItem>
+                        );
+                      })}
                     </CarouselContent>
                     <CarouselPrevious />
                     <CarouselNext />
@@ -381,27 +400,11 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                   src={selectedImage} 
                   alt="תמונה גדולה"
                   className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                  onError={() => {
+                    console.error('שגיאה בטעינת תמונה גדולה:', selectedImage);
+                  }}
                 />
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* מודל להצגת מסמך */}
-      {selectedDocument && (
-        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle className="text-right">{selectedDocument.name}</DialogTitle>
-            </DialogHeader>
-            <div className="text-center py-8">
-              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">מסמך: {selectedDocument.name}</p>
-              <Button onClick={() => downloadDocument(selectedDocument)}>
-                <Download className="h-4 w-4 mr-2" />
-                הורד מסמך
-              </Button>
             </div>
           </DialogContent>
         </Dialog>
