@@ -112,14 +112,21 @@ const CreatePostModal = ({
     
     const property = properties.find(p => p.id === selectedProperty);
     
-    onSubmit({
+    console.log('CreatePostModal - Selected property:', property);
+    console.log('CreatePostModal - Property title:', property?.title);
+    
+    const postData = {
       property: selectedProperty,
-      propertyTitle: property?.title || 'נכס ללא שם',
+      propertyTitle: property?.title || property?.address || `נכס ${selectedProperty}`,
       date: selectedDate.toISOString().split('T')[0],
       timeSlot: selectedTimeSlot as TimeSlot,
       broker: brokerId,
       createdAt: editPost?.createdAt || new Date().toISOString(),
-    });
+    };
+    
+    console.log('CreatePostModal - Submitting post data:', postData);
+    
+    onSubmit(postData);
     
     // Reset form
     setSelectedProperty('');

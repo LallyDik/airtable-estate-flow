@@ -32,6 +32,10 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
     action();
   };
 
+  // Debug log to see what we're getting
+  console.log('PostCard - post data:', post);
+  console.log('PostCard - propertyTitle:', post.propertyTitle);
+
   return (
     <Card 
       className={`hover:shadow-lg transition-shadow duration-200 cursor-pointer ${isPast ? 'opacity-75' : ''}`}
@@ -40,7 +44,7 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">
-            {post.propertyTitle || 'נכס ללא שם'}
+            {post.propertyTitle || `נכס ID: ${post.property}`}
           </CardTitle>
           <div className="flex gap-2">
             {canEdit && (
