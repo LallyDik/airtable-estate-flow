@@ -112,12 +112,15 @@ const CreatePostModal = ({
     
     const property = properties.find(p => p.id === selectedProperty);
     
+    // Ensure we have a proper property title
+    const propertyTitle = property?.title || property?.address || `נכס ${selectedProperty}`;
+    
     console.log('CreatePostModal - Selected property:', property);
-    console.log('CreatePostModal - Property title:', property?.title);
+    console.log('CreatePostModal - Property title:', propertyTitle);
     
     const postData = {
       property: selectedProperty,
-      propertyTitle: property?.title || property?.address || `נכס ${selectedProperty}`,
+      propertyTitle: propertyTitle,
       date: selectedDate.toISOString().split('T')[0],
       timeSlot: selectedTimeSlot as TimeSlot,
       broker: brokerId,

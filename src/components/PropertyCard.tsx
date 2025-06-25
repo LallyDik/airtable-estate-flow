@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Property } from '@/types';
-import { MapPin, Home, Edit, Trash2, Maximize } from 'lucide-react';
+import { MapPin, Home, Edit, Trash2, Users } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -69,10 +69,10 @@ const PropertyCard = ({ property, onEdit, onDelete, onView }: PropertyCardProps)
             <span className="text-sm">{property.type}</span>
           </div>
           
-          {property.size && (
+          {property.rooms && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Maximize className="h-4 w-4" />
-              <span className="text-sm">{property.size} מ"ר</span>
+              <Users className="h-4 w-4" />
+              <span className="text-sm">{property.rooms} חדרים</span>
             </div>
           )}
           

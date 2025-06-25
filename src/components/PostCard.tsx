@@ -32,9 +32,13 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
     action();
   };
 
-  // Debug log to see what we're getting
-  console.log('PostCard - post data:', post);
-  console.log('PostCard - propertyTitle:', post.propertyTitle);
+  // Get the property title with fallback
+  const getPropertyTitle = () => {
+    if (post.propertyTitle && post.propertyTitle.trim()) {
+      return post.propertyTitle;
+    }
+    return `נכס ${post.property}`;
+  };
 
   return (
     <Card 
@@ -44,7 +48,7 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">
-            {post.propertyTitle || `נכס ID: ${post.property}`}
+            {getPropertyTitle()}
           </CardTitle>
           <div className="flex gap-2">
             {canEdit && (
