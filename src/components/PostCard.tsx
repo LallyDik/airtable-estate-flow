@@ -40,7 +40,7 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">
-            {post.propertyTitle || 'ללא שם'}
+            {post.propertyTitle || 'נכס ללא שם'}
           </CardTitle>
           <div className="flex gap-2">
             {canEdit && (
