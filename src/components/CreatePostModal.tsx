@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -115,7 +114,7 @@ const CreatePostModal = ({
     
     onSubmit({
       property: selectedProperty,
-      propertyTitle: property?.title,
+      propertyTitle: property?.title || 'נכס ללא שם',
       date: selectedDate.toISOString().split('T')[0],
       timeSlot: selectedTimeSlot as TimeSlot,
       broker: brokerId,
