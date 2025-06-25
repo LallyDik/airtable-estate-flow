@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Property } from '@/types';
 import { AirtableService } from '@/services/airtable';
 import { 
@@ -19,7 +19,8 @@ import {
   Loader2,
   X,
   Download,
-  ExternalLink
+  ExternalLink,
+  Eye
 } from 'lucide-react';
 
 interface PropertyDetailsModalProps {
@@ -86,6 +87,12 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
     setSelectedDocument(document);
   };
 
+  const viewDocument = (document: any) => {
+    if (document.url) {
+      window.open(document.url, '_blank');
+    }
+  };
+
   const downloadDocument = (document: any) => {
     if (document.url) {
       window.open(document.url, '_blank');
@@ -130,88 +137,6 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* תמונות */}
-            {images.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" />
-                  תמונות ({images.length})
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {images.map((image, index) => (
-                    <div 
-                      key={index}
-                      className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
-                      onClick={() => handleImageClick(image)}
-                    >
-                      {image.thumbnails?.small?.url ? (
-                        <img 
-                          src={image.thumbnails.small.url} 
-                          alt={`תמונה ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
-                        תמונה {index + 1}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* מסמכים */}
-            {(documents.length > 0 || property.exclusivityDocument) && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  מסמכים
-                </h3>
-                <div className="space-y-2">
-                  {property.exclusivityDocument && (
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium">מסמך בלעדיות</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">זמין</Badge>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDocumentClick({ name: 'מסמך בלעדיות', url: property.exclusivityDocument })}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {documents.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium">{doc.filename || `מסמך ${index + 1}`}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{doc.type || 'מסמך'}</Badge>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => downloadDocument(doc)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* פרטי הנכס */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
@@ -308,6 +233,113 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                       {property.offersUntil}
                     </Badge>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* מסמכים */}
+            {(documents.length > 0 || property.exclusivityDocument) && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-right">
+                    <FileText className="h-5 w-5" />
+                    מסמכים
+                  </h3>
+                  <div className="space-y-2">
+                    {property.exclusivityDocument && (
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium">מסמך בלעדיות</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => viewDocument({ name: 'מסמך בלעדיות', url: property.exclusivityDocument })}
+                          >
+                            <Eye className="h-4 w-4 ml-1" />
+                            צפייה
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => downloadDocument({ name: 'מסמך בלעדיות', url: property.exclusivityDocument })}
+                          >
+                            <Download className="h-4 w-4 ml-1" />
+                            הורדה
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium">{doc.filename || `מסמך ${index + 1}`}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => viewDocument(doc)}
+                          >
+                            <Eye className="h-4 w-4 ml-1" />
+                            צפייה
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => downloadDocument(doc)}
+                          >
+                            <Download className="h-4 w-4 ml-1" />
+                            הורדה
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* גלריית תמונות */}
+            {images.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-right">
+                    <ImageIcon className="h-5 w-5" />
+                    גלריית תמונות ({images.length})
+                  </h3>
+                  <Carousel className="w-full max-w-5xl mx-auto">
+                    <CarouselContent>
+                      {images.map((image, index) => (
+                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                          <div 
+                            className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
+                            onClick={() => handleImageClick(image)}
+                          >
+                            {image.thumbnails?.small?.url ? (
+                              <img 
+                                src={image.thumbnails.small.url} 
+                                alt={`תמונה ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <ImageIcon className="h-8 w-8 text-gray-400" />
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
+                              תמונה {index + 1}
+                            </div>
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
                 </CardContent>
               </Card>
             )}
