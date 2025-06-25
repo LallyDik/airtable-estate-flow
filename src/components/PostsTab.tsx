@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, Loader2, AlertCircle, TrendingUp } from 'lucide-react';
+import { Plus, Calendar, Loader2, AlertCircle, TrendingUp, History } from 'lucide-react';
 import { Post, Property, User } from '@/types';
 import { AirtableService } from '@/services/airtable';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
 import PropertyDetailsModal from './PropertyDetailsModal';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PostsTabProps {
   user: User;
@@ -124,6 +125,22 @@ const PostsTab = ({ user }: PostsTabProps) => {
   const canCreateNewPost = () => {
     return getTodayPostCount() < 2 && properties.length > 0;
   };
+
+  // הפרדה בין פרסומים עבר לעתיד
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const futurePosts = posts.filter(post => {
+    const postDate = new Date(post.date);
+    postDate.setHours(0, 0, 0, 0);
+    return postDate >= today;
+  });
+  
+  const pastPosts = posts.filter(post => {
+    const postDate = new Date(post.date);
+    postDate.setHours(0, 0, 0, 0);
+    return postDate < today;
+  });
 
   const todayPosts = getTodayPostCount();
   const totalPosts = posts.length;
@@ -268,17 +285,74 @@ const PostsTab = ({ user }: PostsTabProps) => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onEdit={handleEditPost}
-              onDelete={handleDeletePost}
-              onViewProperty={handleViewProperty}
-            />
-          ))}
-        </div>
+        <Tabs defaultValue="future" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="future" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              פרסומים מתוכננים ({futurePosts.length})
+            </TabsTrigger>
+            <TabsTrigger value="past" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              פרסומים קודמים ({pastPosts.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="future">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right">פרסומים מתוכננים ועתידיים</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {futurePosts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">אין פרסומים מתוכננים</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {futurePosts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onEdit={handleEditPost}
+                        onDelete={handleDeletePost}
+                        onViewProperty={handleViewProperty}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="past">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right">פרסומים שפורסמו</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pastPosts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">אין פרסומים קודמים</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {pastPosts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onEdit={handleEditPost}
+                        onDelete={handleDeletePost}
+                        onViewProperty={handleViewProperty}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       )}
 
       <CreatePostModal

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Loader2, Home, AlertCircle } from 'lucide-react';
@@ -6,6 +5,7 @@ import { Property, User } from '@/types';
 import { AirtableService } from '@/services/airtable';
 import PropertyCard from './PropertyCard';
 import CreatePropertyModal from './CreatePropertyModal';
+import PropertyDetailsModal from './PropertyDetailsModal';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +20,7 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
   const [editingProperty, setEditingProperty] = useState<Property | undefined>();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,6 +99,10 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingProperty(undefined);
+  };
+
+  const handleViewProperty = (property: Property) => {
+    setSelectedPropertyId(property.id);
   };
 
   const filteredProperties = properties.filter(property =>
@@ -202,6 +207,7 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
               property={property}
               onEdit={handleEditProperty}
               onDelete={handleDeleteProperty}
+              onView={handleViewProperty}
             />
           ))}
         </div>
@@ -214,6 +220,15 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
         editProperty={editingProperty}
         brokerId={user.id}
       />
+
+      {selectedPropertyId && (
+        <PropertyDetailsModal
+          isOpen={!!selectedPropertyId}
+          onClose={() => setSelectedPropertyId(null)}
+          propertyId={selectedPropertyId}
+          properties={properties}
+        />
+      )}
     </div>
   );
 };

@@ -21,21 +21,15 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
   
   const canEdit = !isPast;
 
-  const getDisplayTime = () => {
-    const timeSlot = TIME_SLOT_LABELS[post.timeSlot];
-    const date = postDate.toLocaleDateString('he-IL');
-    return `${date} - ${timeSlot}`;
-  };
-
   return (
     <Card className={`hover:shadow-lg transition-shadow duration-200 ${isPast ? 'opacity-75' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">
-            {post.propertyTitle || 'נכס'}
+            {post.propertyTitle || 'נכס ללא שם'}
           </CardTitle>
           <div className="flex gap-2">
-            {onViewProperty && (
+            {onViewProperty && post.property && (
               <Button
                 variant="outline"
                 size="sm"
