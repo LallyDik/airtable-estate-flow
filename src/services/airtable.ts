@@ -62,10 +62,25 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
 
 // פונקציה למיפוי נתוני פרסום לשדות Airtable
 const mapPostToAirtableFields = (post: Omit<Post, 'id'>, propertyRecordId?: string) => {
+  // מיפוי זמן פרסום לערכים המתאימים ב-Airtable
+  let timeSlotValue = '';
+  switch (post.timeSlot) {
+    case 'morning':
+      timeSlotValue = 'בוקר';
+      break;
+    case 'afternoon':
+      timeSlotValue = 'צהריים';
+      break;
+    case 'evening':
+      timeSlotValue = 'ערב';
+      break;
+    default:
+      timeSlotValue = 'בוקר';
+  }
+
   const fields: Record<string, any> = {
     'תאריך פרסום': post.date,
-    'זמן פרסום': post.timeSlot === 'morning' ? 'בוקר' : 
-                  post.timeSlot === 'afternoon' ? 'צהריים' : 'ערב',
+    'זמן פרסום': timeSlotValue,
     'סטטוס פרסום': 'פרסום מיידי'
     // הסרנו את 'מועד פרסום' כי זה שדה מחושב
   };

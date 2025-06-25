@@ -4,21 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post, TIME_SLOT_LABELS } from '@/types';
-import { Calendar, Clock, Building, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2, Eye } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
   onEdit: (post: Post) => void;
   onDelete: (id: string) => void;
+  onViewProperty?: (propertyId: string) => void;
 }
 
-const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
+const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => {
   const postDate = new Date(post.date);
   const today = new Date();
   const isPast = postDate < today;
   const isToday = postDate.toDateString() === today.toDateString();
   
   const canEdit = !isPast;
+
+  const getDisplayTime = () => {
+    const timeSlot = TIME_SLOT_LABELS[post.timeSlot];
+    const date = postDate.toLocaleDateString('he-IL');
+    return `${date} - ${timeSlot}`;
+  };
 
   return (
     <Card className={`hover:shadow-lg transition-shadow duration-200 ${isPast ? 'opacity-75' : ''}`}>
@@ -27,26 +34,38 @@ const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
           <CardTitle className="text-lg font-semibold text-gray-800">
             {post.propertyTitle || 'נכס'}
           </CardTitle>
-          {canEdit && (
-            <div className="flex gap-2">
+          <div className="flex gap-2">
+            {onViewProperty && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(post)}
+                onClick={() => onViewProperty(post.property)}
                 className="p-2"
               >
-                <Edit className="h-4 w-4" />
+                <Eye className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDelete(post.id)}
-                className="p-2 text-red-600 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+            )}
+            {canEdit && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(post)}
+                  className="p-2"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(post.id)}
+                  className="p-2 text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -67,11 +86,6 @@ const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
           <div className="flex items-center gap-2 text-gray-600">
             <Clock className="h-4 w-4" />
             <span className="text-sm">{TIME_SLOT_LABELS[post.timeSlot]}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-gray-600">
-            <Building className="h-4 w-4" />
-            <span className="text-sm">מזהה נכס: {post.property}</span>
           </div>
           
           <div className="flex items-center justify-between pt-2">

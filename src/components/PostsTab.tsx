@@ -5,6 +5,7 @@ import { Post, Property, User } from '@/types';
 import { AirtableService } from '@/services/airtable';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
+import PropertyDetailsModal from './PropertyDetailsModal';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | undefined>();
   const [loading, setLoading] = useState(true);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -108,6 +110,10 @@ const PostsTab = ({ user }: PostsTabProps) => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingPost(undefined);
+  };
+
+  const handleViewProperty = (propertyId: string) => {
+    setSelectedPropertyId(propertyId);
   };
 
   const getTodayPostCount = () => {
@@ -269,6 +275,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
               post={post}
               onEdit={handleEditPost}
               onDelete={handleDeletePost}
+              onViewProperty={handleViewProperty}
             />
           ))}
         </div>
@@ -283,6 +290,15 @@ const PostsTab = ({ user }: PostsTabProps) => {
         brokerId={user.id}
         existingPosts={posts}
       />
+
+      {selectedPropertyId && (
+        <PropertyDetailsModal
+          isOpen={!!selectedPropertyId}
+          onClose={() => setSelectedPropertyId(null)}
+          propertyId={selectedPropertyId}
+          properties={properties}
+        />
+      )}
     </div>
   );
 };
