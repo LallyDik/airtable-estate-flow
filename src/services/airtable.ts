@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -566,5 +565,39 @@ export class AirtableService {
       id: record.id,
       ...record.fields
     })) || [];
+  }
+
+  // Add new method for getting documents
+  static async getDocuments(propertyId: string) {
+    console.log('📄 מבקש מסמכים עבור נכס:', propertyId);
+    
+    try {
+      // For now, we'll return the exclusivity document from the property record
+      const response = await fetch(`${BASE_URL}/נכסים/${propertyId}`, { headers });
+      
+      if (!response.ok) {
+        console.error('❌ שגיאה בקבלת מסמכים:', response.status);
+        return [];
+      }
+      
+      const data = await response.json();
+      const documents = [];
+      
+      // Add exclusivity document if exists
+      if (data.fields['מסמך בלעדיות']) {
+        documents.push({
+          id: 'exclusivity',
+          name: 'מסמך בלעדיות',
+          url: data.fields['מסמך בלעדיות'],
+          type: 'document'
+        });
+      }
+      
+      console.log('✅ מסמכים נמצאו:', documents.length);
+      return documents;
+    } catch (error) {
+      console.error('❌ שגיאה בקבלת מסמכים:', error);
+      return [];
+    }
   }
 }

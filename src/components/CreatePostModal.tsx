@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Property, Post, TimeSlot, TIME_SLOT_LABELS } from '@/types';
-import { X } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -28,8 +29,8 @@ const CreatePostModal = ({
   brokerId, 
   existingPosts 
 }: CreatePostModalProps) => {
-  const [selectedProperties, setSelectedProperties] = useState<string[]>(
-    editPost?.property ? [editPost.property] : []
+  const [selectedProperty, setSelectedProperty] = useState<string>(
+    editPost?.property || ''
   );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     editPost ? new Date(editPost.date) : undefined
@@ -39,50 +40,59 @@ const CreatePostModal = ({
 
   useEffect(() => {
     if (editPost) {
-      setSelectedProperties(editPost.property ? [editPost.property] : []);
+      setSelectedProperty(editPost.property || '');
       setSelectedDate(new Date(editPost.date));
       setSelectedTimeSlot(editPost.timeSlot);
     } else {
-      setSelectedProperties([]);
+      setSelectedProperty('');
       setSelectedDate(undefined);
       setSelectedTimeSlot('');
     }
   }, [editPost]);
 
+  // Helper function to get available dates (7 days from today)
   const getAvailableDates = () => {
     const today = new Date();
-    const maxDate = new Date();
-    maxDate.setDate(today.getDate() + 7);
-    
-    const availableDates: Date[] = [];
+    const dates: Date[] = [];
     for (let i = 0; i <= 7; i++) {
       const date = new Date();
       date.setDate(today.getDate() + i);
-      availableDates.push(date);
+      dates.push(date);
     }
-    
-    return availableDates;
+    return dates;
   };
 
+  // Check if property can be posted (3 days rule)
   const canPostProperty = (propertyId: string, date: Date) => {
     const property = properties.find(p => p.id === propertyId);
     if (!property) return false;
     
     // Check if property was posted in the last 3 days
-    if (property.lastPostDate) {
-      const lastPost = new Date(property.lastPostDate);
-      const daysDifference = (date.getTime() - lastPost.getTime()) / (1000 * 3600 * 24);
-      if (daysDifference < 3) return false;
-    }
+    const propertyPosts = existingPosts.filter(post => 
+      post.property === propertyId && 
+      post.id !== editPost?.id // Exclude current edit
+    );
     
-    return true;
+    if (propertyPosts.length === 0) return true;
+    
+    // Find the most recent post for this property
+    const latestPost = propertyPosts.sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    )[0];
+    
+    const latestPostDate = new Date(latestPost.date);
+    const daysDifference = (date.getTime() - latestPostDate.getTime()) / (1000 * 3600 * 24);
+    
+    return daysDifference >= 3;
   };
 
+  // Check daily post limit (2 posts per day)
   const getDailyPostCount = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
     return existingPosts.filter(post => 
       post.broker === brokerId && 
-      post.date.startsWith(dateStr)
+      post.date.startsWith(dateStr) &&
+      post.id !== editPost?.id // Exclude current edit
     ).length;
   };
 
@@ -90,41 +100,22 @@ const CreatePostModal = ({
     return getDailyPostCount(date) < 2;
   };
 
-  const handlePropertySelect = (propertyId: string) => {
-    if (selectedProperties.includes(propertyId)) {
-      // Remove property if already selected
-      setSelectedProperties(prev => prev.filter(id => id !== propertyId));
-    } else if (selectedProperties.length < 2) {
-      // Add property if less than 2 selected
-      setSelectedProperties(prev => [...prev, propertyId]);
-    }
-  };
-
-  const removeProperty = (propertyId: string) => {
-    setSelectedProperties(prev => prev.filter(id => id !== propertyId));
-  };
-
+  // Get available properties for the selected date
   const getAvailableProperties = () => {
     if (!selectedDate) return properties;
     
-    return properties.filter(property => {
-      // Don't show already selected properties in the dropdown
-      if (selectedProperties.includes(property.id)) return false;
-      return canPostProperty(property.id, selectedDate);
-    });
+    return properties.filter(property => canPostProperty(property.id, selectedDate));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedProperties.length === 0 || !selectedDate || !selectedTimeSlot) return;
+    if (!selectedProperty || !selectedDate || !selectedTimeSlot) return;
     
-    // For now, we'll submit with the first property (maintaining backward compatibility)
-    // In the future, the backend should be updated to handle multiple properties
-    const primaryProperty = properties.find(p => p.id === selectedProperties[0]);
+    const property = properties.find(p => p.id === selectedProperty);
     
     onSubmit({
-      property: selectedProperties[0],
-      propertyTitle: primaryProperty?.title,
+      property: selectedProperty,
+      propertyTitle: property?.title,
       date: selectedDate.toISOString().split('T')[0],
       timeSlot: selectedTimeSlot as TimeSlot,
       broker: brokerId,
@@ -132,7 +123,7 @@ const CreatePostModal = ({
     });
     
     // Reset form
-    setSelectedProperties([]);
+    setSelectedProperty('');
     setSelectedDate(undefined);
     setSelectedTimeSlot('');
     onClose();
@@ -148,16 +139,34 @@ const CreatePostModal = ({
     maxDate.setDate(today.getDate() + 7);
     maxDate.setHours(0, 0, 0, 0);
     
+    // Outside allowed range
     if (checkDate < today || checkDate > maxDate) return true;
+    
+    // Daily limit reached
     if (!canPostOnDay(date)) return true;
     
     return false;
   };
 
-  const canAnyPropertyBePosted = () => {
-    if (!selectedDate) return true;
-    return selectedProperties.some(propertyId => canPostProperty(propertyId, selectedDate));
+  const getValidationMessages = () => {
+    const messages: string[] = [];
+    
+    if (selectedDate) {
+      const dailyCount = getDailyPostCount(selectedDate);
+      if (dailyCount >= 2) {
+        messages.push('הגעת למגבלת 2 פרסומים ביום זה');
+      }
+      
+      if (selectedProperty && !canPostProperty(selectedProperty, selectedDate)) {
+        messages.push('נכס זה פורסם בתוך 3 הימים האחרונים - יש להמתין');
+      }
+    }
+    
+    return messages;
   };
+
+  const validationMessages = getValidationMessages();
+  const isFormValid = selectedProperty && selectedDate && selectedTimeSlot && validationMessages.length === 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -167,77 +176,41 @@ const CreatePostModal = ({
             {editPost ? 'עריכת פרסום' : 'פרסום חדש'}
           </DialogTitle>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="property">בחר נכסים (עד 2)</Label>
-            
-            {/* Selected Properties */}
-            {selectedProperties.length > 0 && (
-              <div className="mb-3 space-y-2">
-                {selectedProperties.map(propertyId => {
-                  const property = properties.find(p => p.id === propertyId);
-                  return (
-                    <div key={propertyId} className="flex items-center justify-between bg-blue-50 p-2 rounded border">
-                      <span className="text-sm font-medium text-right">
-                        {property?.title} - {property?.address}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeProperty(propertyId)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+            <Label htmlFor="property">בחר נכס</Label>
+            <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+              <SelectTrigger>
+                <SelectValue placeholder="בחר נכס לפרסום" />
+              </SelectTrigger>
+              <SelectContent>
+                {getAvailableProperties().map((property) => (
+                  <SelectItem key={property.id} value={property.id}>
+                    {property.title} - {property.address}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedDate && selectedProperty && !canPostProperty(selectedProperty, selectedDate) && (
+              <p className="text-xs text-red-600 mt-1">
+                נכס זה פורסם בתוך 3 הימים האחרונים
+              </p>
             )}
-            
-            {/* Property Selection Dropdown */}
-            {selectedProperties.length < 2 && (
-              <Select value="" onValueChange={handlePropertySelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder={
-                    selectedProperties.length === 0 
-                      ? "בחר נכס לפרסום" 
-                      : "בחר נכס נוסף (אופציונלי)"
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {getAvailableProperties().map((property) => (
-                    <SelectItem key={property.id} value={property.id}>
-                      {property.title} - {property.address}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
-            <p className="text-xs text-gray-500 mt-1 text-right">
-              ניתן לבחור עד 2 נכסים לפרסום
-            </p>
           </div>
           
           <div>
-            <Label>בחר תאריך</Label>
+            <Label>בחר תאריך (עד 7 ימים מהיום)</Label>
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
               disabled={isDateDisabled}
-              className={cn("w-full border rounded-md p-3 pointer-events-auto")}
+              className={cn("w-full border rounded-md p-3")}
             />
             {selectedDate && !canPostOnDay(selectedDate) && (
               <p className="text-sm text-red-600 mt-2">
-                הגעת למגבלת 2 פרסומים ביום זה
-              </p>
-            )}
-            {selectedDate && selectedProperties.length > 0 && !canAnyPropertyBePosted() && (
-              <p className="text-sm text-red-600 mt-2">
-                לא ניתן לפרסם נכסים אלה - נדרש המתנה של 3 ימים מהפרסום האחרון
+                הגעת למגבלת 2 פרסומים ביום זה ({getDailyPostCount(selectedDate)}/2)
               </p>
             )}
           </div>
@@ -257,12 +230,25 @@ const CreatePostModal = ({
               </SelectContent>
             </Select>
           </div>
+
+          {validationMessages.length > 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <ul className="list-disc list-inside">
+                  {validationMessages.map((message, index) => (
+                    <li key={index}>{message}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="flex gap-2 pt-4">
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={selectedProperties.length === 0 || !selectedDate || !selectedTimeSlot}
+              disabled={!isFormValid}
             >
               {editPost ? 'עדכן' : 'פרסם'}
             </Button>
