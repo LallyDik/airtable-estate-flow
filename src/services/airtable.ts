@@ -446,21 +446,33 @@ export class AirtableService {
           console.log('📈 מספר פרסומים של המתווך:', userPosts.length);
           
           return userPosts.map((record: any) => {
-            // נקבל את שם הנכס מהשדה המחושב או משדה הקישור
-            let propertyTitle = 'נכס';
+            // קבלת שם הנכס הנכון מהשדות המחושבים
+            let propertyTitle = 'נכס לפרסום';
             
-            // ננסה למצוא את שם הנכס
-            if (record.fields['שם נכס (from נכסים לפרסום)']) {
-              if (Array.isArray(record.fields['שם נכס (from נכסים לפרסום)'])) {
-                propertyTitle = record.fields['שם נכס (from נכסים לפרסום)'][0];
-              } else {
-                propertyTitle = record.fields['שם נכס (from נכסים לפרסום)'];
-              }
-            } else if (record.fields['שם נכס לתצוגה (from נכסים לפרסום)']) {
-              if (Array.isArray(record.fields['שם נכס לתצוגה (from נכסים לפרסום)'])) {
-                propertyTitle = record.fields['שם נכס לתצוגה (from נכסים לפרסום)'][0];
-              } else {
-                propertyTitle = record.fields['שם נכס לתצוגה (from נכסים לפרסום)'];
+            // נסה שדות שונים לשם הנכס
+            const titleFields = [
+              'שם נכס לתצוגה (from נכסים לפרסום)',
+              'שם נכס (from נכסים לפרסום)', 
+              'title (from נכסים לפרסום)'
+            ];
+            
+            for (const field of titleFields) {
+              if (record.fields[field]) {
+                let title = record.fields[field];
+                // אם זה מערך, קח את הערך הראשון
+                if (Array.isArray(title)) {
+                  title = title[0];
+                }
+                // ודא שזה שם תקין
+                if (title && 
+                    typeof title === 'string' && 
+                    title.trim() && 
+                    !title.includes('rec') &&
+                    title !== 'נכס') {
+                  propertyTitle = title;
+                  console.log('📝 נמצא שם נכס מהשדה:', field, '->', title);
+                  break;
+                }
               }
             }
             
@@ -615,8 +627,12 @@ export class AirtableService {
           thumbnails = attachment.thumbnails || null;
           console.log('🖼️ נמצאה תמונה מסוג Attachment:', imageUrl);
         }
-        // בדיקת שדה קישור לתמונה
-        else if (record.fields['קישור לתמונה']) {
+        // בדיקת שדה קישור לתמונה - רק אם זה קישור אמיתי
+        else if (record.fields['קישור לתמונה'] && 
+                 typeof record.fields['קישור לתמונה'] === 'string' &&
+                 !record.fields['קישור לתמונה'].includes('זמני') &&
+                 (record.fields['קישור לתמונה'].startsWith('http') || 
+                  record.fields['קישור לתמונה'].startsWith('https'))) {
           imageUrl = record.fields['קישור לתמונה'];
           console.log('🖼️ נמצא קישור לתמונה:', imageUrl);
         }
@@ -633,8 +649,15 @@ export class AirtableService {
         return imageData;
       });
       
-      // סינון תמונות עם URL תקין
-      const validImages = processedImages.filter(img => img.url && img.url.trim() !== '');
+      // סינון תמונות עם URL תקין בלבד
+      const validImages = processedImages.filter(img => 
+        img.url && 
+        typeof img.url === 'string' && 
+        img.url.trim() !== '' &&
+        !img.url.includes('זמני') &&
+        (img.url.startsWith('http') || img.url.startsWith('https'))
+      );
+      
       console.log('✅ תמונות תקינות:', validImages.length, 'מתוך', processedImages.length);
       
       return validImages;
@@ -668,17 +691,22 @@ export class AirtableService {
         // אם זה מערך של קבצים מצורפים
         if (Array.isArray(exclusivityDoc) && exclusivityDoc.length > 0) {
           exclusivityDoc.forEach((doc, index) => {
-            documents.push({
-              id: `exclusivity-${index}`,
-              name: 'מסמך בלעדיות',
-              url: doc.url,
-              filename: doc.filename || 'מסמך בלעדיות',
-              type: 'document'
-            });
+            if (doc.url && !doc.url.includes('זמני')) {
+              documents.push({
+                id: `exclusivity-${index}`,
+                name: 'מסמך בלעדיות',
+                url: doc.url,
+                filename: doc.filename || 'מסמך בלעדיות',
+                type: 'document'
+              });
+            }
           });
         }
-        // אם זה קישור טקסט
-        else if (typeof exclusivityDoc === 'string' && exclusivityDoc.trim() !== '') {
+        // אם זה קישור טקסט תקין
+        else if (typeof exclusivityDoc === 'string' && 
+                 exclusivityDoc.trim() !== '' && 
+                 !exclusivityDoc.includes('זמני') &&
+                 (exclusivityDoc.startsWith('http') || exclusivityDoc.startsWith('https'))) {
           documents.push({
             id: 'exclusivity',
             name: 'מסמך בלעדיות',
@@ -689,7 +717,7 @@ export class AirtableService {
         }
       }
       
-      console.log('✅ מסמכים נמצאו:', documents.length);
+      console.log('✅ מסמכים תקינים נמצאו:', documents.length);
       return documents;
     } catch (error) {
       console.error('❌ שגיאה בקבלת מסמכים:', error);

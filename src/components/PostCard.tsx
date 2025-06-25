@@ -33,34 +33,52 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
     action();
   };
 
-  // Get the property title with better fallback logic
+  // פונקציה משופרת לקבלת שם הנכס
   const getPropertyTitle = () => {
-    console.log('PostCard - Getting property title for post:', post);
-    console.log('PostCard - Post property ID:', post.property);
-    console.log('PostCard - Post propertyTitle:', post.propertyTitle);
-    console.log('PostCard - Properties available:', properties?.length || 0);
+    console.log('PostCard - מחפש שם נכס עבור:', post);
+    console.log('PostCard - propertyTitle בפוסט:', post.propertyTitle);
+    console.log('PostCard - property ID:', post.property);
+    console.log('PostCard - properties זמינים:', properties?.length || 0);
     
-    // First try to use propertyTitle from the post if it exists and is meaningful
+    // אם יש שם נכס בפוסט עצמו ואינו ברירת מחדל גרועה
     if (post.propertyTitle && 
+        typeof post.propertyTitle === 'string' && 
         post.propertyTitle.trim() && 
-        post.propertyTitle !== 'נכס' && 
-        !post.propertyTitle.includes('rec')) {
-      console.log('PostCard - Using propertyTitle from post:', post.propertyTitle);
+        !post.propertyTitle.includes('rec') && // לא מזהה Airtable
+        post.propertyTitle !== 'נכס' &&
+        post.propertyTitle !== 'נכס לפרסום') {
+      console.log('PostCard - מצא שם נכס תקין בפוסט:', post.propertyTitle);
       return post.propertyTitle;
     }
     
-    // Then try to find the property in the properties list
+    // חפש בנתוני הנכסים לפי ID
     if (properties && properties.length > 0 && post.property) {
       const property = properties.find(p => p.id === post.property);
-      console.log('PostCard - Found property in list:', property);
-      if (property && property.title && property.title.trim()) {
-        console.log('PostCard - Using property title from list:', property.title);
-        return property.title;
+      console.log('PostCard - נכס שנמצא ברשימה:', property);
+      
+      if (property) {
+        // נסה מספר שדות אפשריים לשם הנכס
+        const possibleTitles = [
+          property.title,
+          property['שם נכס לתצוגה'],
+          property['שם נכס'],
+          property.name
+        ];
+        
+        for (const title of possibleTitles) {
+          if (title && 
+              typeof title === 'string' && 
+              title.trim() && 
+              !title.includes('rec') &&
+              title !== 'נכס') {
+            console.log('PostCard - מצא שם נכס תקין:', title);
+            return title;
+          }
+        }
       }
     }
     
-    // Fallback to a generic title
-    console.log('PostCard - Using fallback title');
+    console.log('PostCard - לא נמצא שם נכס תקין, משתמש בברירת מחדל');
     return 'נכס לפרסום';
   };
 

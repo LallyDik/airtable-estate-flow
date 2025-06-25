@@ -70,9 +70,13 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
         console.log('🖼️ תמונות שנטענו:', imagesData);
         console.log('📄 מסמכים שנטענו:', documentsData);
         
-        // סינון תמונות תקינות
+        // סינון תמונות תקינות - תמונות עם URL תקין בלבד
         const validImages = imagesData.filter(img => {
-          const hasValidUrl = img.url || (img.thumbnails && img.thumbnails.small && img.thumbnails.small.url);
+          const hasValidUrl = img.url && 
+                             typeof img.url === 'string' && 
+                             img.url.trim() !== '' &&
+                             !img.url.includes('זמני') && // לא קישורים זמניים
+                             (img.url.startsWith('http') || img.url.startsWith('https'));
           console.log('🖼️ בודק תמונה:', img, 'תקינה:', hasValidUrl);
           return hasValidUrl;
         });
@@ -99,27 +103,30 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
   };
 
   const handleImageClick = (image: any) => {
-    const imageUrl = image.url || (image.thumbnails && image.thumbnails.large && image.thumbnails.large.url) || (image.thumbnails && image.thumbnails.small && image.thumbnails.small.url);
-    console.log('🖼️ לוחץ על תמונה:', imageUrl);
-    setSelectedImage(imageUrl);
+    console.log('🖼️ לוחץ על תמונה:', image);
+    setSelectedImage(image.url);
   };
 
   const viewDocument = (document: any) => {
     console.log('📄 צופה במסמך:', document);
-    if (document.url) {
+    if (document.url && !document.url.includes('זמני')) {
       window.open(document.url, '_blank');
+    } else {
+      console.error('מסמך אינו זמין לצפייה');
     }
   };
 
   const downloadDocument = (document: any) => {
     console.log('📄 מוריד מסמך:', document);
-    if (document.url) {
+    if (document.url && !document.url.includes('זמני')) {
       const link = document.createElement('a');
       link.href = document.url;
       link.download = document.filename || document.name || 'document';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    } else {
+      console.error('מסמך אינו זמין להורדה');
     }
   };
 
@@ -261,8 +268,8 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               </Card>
             )}
 
-            {/* מסמכים - הצגה מותנית ללא כפילות */}
-            {(documents.length > 0 || property.exclusivityDocument) && (
+            {/* מסמכים - קבלת מסמכים יחידים ללא כפילות */}
+            {documents.length > 0 && (
               <Card>
                 <CardContent className="p-4">
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-right">
@@ -270,46 +277,18 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                     מסמכים
                   </h3>
                   <div className="space-y-2">
-                    {/* מסמך בלעדיות - רק אם אין בתוך documents */}
-                    {property.exclusivityDocument && !documents.some(doc => doc.id === 'exclusivity') && (
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium">מסמך בלעדיות</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => viewDocument({ name: 'מסמך בלעדיות', url: property.exclusivityDocument })}
-                          >
-                            <Eye className="h-4 w-4 ml-1" />
-                            צפייה
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => downloadDocument({ name: 'מסמך בלעדיות', url: property.exclusivityDocument, filename: 'מסמך בלעדיות.pdf' })}
-                          >
-                            <Download className="h-4 w-4 ml-1" />
-                            הורדה
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* מסמכים נוספים */}
                     {documents.map((doc, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium">{doc.filename || doc.name || `מסמך ${index + 1}`}</span>
+                          <span className="text-sm font-medium">{doc.name || doc.filename || `מסמך ${index + 1}`}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => viewDocument(doc)}
+                            disabled={!doc.url || doc.url.includes('זמני')}
                           >
                             <Eye className="h-4 w-4 ml-1" />
                             צפייה
@@ -318,6 +297,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                             variant="outline" 
                             size="sm"
                             onClick={() => downloadDocument(doc)}
+                            disabled={!doc.url || doc.url.includes('זמני')}
                           >
                             <Download className="h-4 w-4 ml-1" />
                             הורדה
@@ -330,7 +310,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               </Card>
             )}
 
-            {/* גלריית תמונות */}
+            {/* גלריית תמונות - רק תמונות תקינות */}
             {images.length > 0 && (
               <Card>
                 <CardContent className="p-4">
@@ -340,41 +320,47 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                   </h3>
                   <Carousel className="w-full max-w-5xl mx-auto">
                     <CarouselContent>
-                      {images.map((image, index) => {
-                        const imageUrl = image.url || (image.thumbnails && image.thumbnails.small && image.thumbnails.small.url);
-                        return (
-                          <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                            <div 
-                              className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
-                              onClick={() => handleImageClick(image)}
-                            >
-                              {imageUrl ? (
-                                <img 
-                                  src={imageUrl} 
-                                  alt={`תמונה ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    console.error('שגיאה בטעינת תמונה:', image);
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                  <ImageIcon className="h-8 w-8 text-gray-400" />
-                                  <span className="text-xs text-gray-500 mt-2">תמונה לא זמינה</span>
-                                </div>
-                              )}
-                              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
-                                תמונה {index + 1}
-                              </div>
+                      {images.map((image, index) => (
+                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                          <div 
+                            className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
+                            onClick={() => handleImageClick(image)}
+                          >
+                            <img 
+                              src={image.url} 
+                              alt={`תמונה ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                console.error('שגיאה בטעינת תמונה:', image);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
+                              תמונה {index + 1}
                             </div>
-                          </CarouselItem>
-                        );
-                      })}
+                          </div>
+                        </CarouselItem>
+                      ))}
                     </CarouselContent>
                     <CarouselPrevious />
                     <CarouselNext />
                   </Carousel>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* הודעה במקרה שאין תמונות */}
+            {images.length === 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-right">
+                    <ImageIcon className="h-5 w-5" />
+                    גלריית תמונות
+                  </h3>
+                  <div className="text-center py-8 text-gray-500">
+                    <ImageIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <p>אין תמונות זמינות לנכס זה</p>
+                  </div>
                 </CardContent>
               </Card>
             )}
