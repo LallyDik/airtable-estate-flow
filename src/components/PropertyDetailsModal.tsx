@@ -17,7 +17,9 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
-  X
+  X,
+  Download,
+  ExternalLink
 } from 'lucide-react';
 
 interface PropertyDetailsModalProps {
@@ -30,8 +32,10 @@ interface PropertyDetailsModalProps {
 const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: PropertyDetailsModalProps) => {
   const [property, setProperty] = useState<Property | null>(null);
   const [images, setImages] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
 
   useEffect(() => {
     if (isOpen && propertyId) {
@@ -47,13 +51,18 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
       const foundProperty = properties.find(p => p.id === propertyId);
       setProperty(foundProperty || null);
 
-      // טען תמונות אם יש
+      // טען תמונות ומסמכים אם יש
       try {
-        const imagesData = await AirtableService.getImages(propertyId);
+        const [imagesData, documentsData] = await Promise.all([
+          AirtableService.getImages(propertyId).catch(() => []),
+          AirtableService.getDocuments?.(propertyId).catch(() => []) || []
+        ]);
         setImages(imagesData);
+        setDocuments(documentsData);
       } catch (error) {
-        console.log('לא נמצאו תמונות לנכס זה');
+        console.log('שגיאה בטעינת קבצים:', error);
         setImages([]);
+        setDocuments([]);
       }
     } catch (error) {
       console.error('שגיאה בטעינת פרטי הנכס:', error);
@@ -67,6 +76,20 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
       style: 'currency',
       currency: 'ILS'
     }).format(price);
+  };
+
+  const handleImageClick = (image: any) => {
+    setSelectedImage(image.url || image.thumbnails?.large?.url || null);
+  };
+
+  const handleDocumentClick = (document: any) => {
+    setSelectedDocument(document);
+  };
+
+  const downloadDocument = (document: any) => {
+    if (document.url) {
+      window.open(document.url, '_blank');
+    }
   };
 
   if (loading) {
@@ -112,18 +135,76 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               <div>
                 <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <ImageIcon className="h-5 w-5" />
-                  תמונות
+                  תמונות ({images.length})
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {images.map((image, index) => (
                     <div 
                       key={index}
-                      className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setSelectedImage(image.url || `תמונה ${index + 1}`)}
+                      className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
+                      onClick={() => handleImageClick(image)}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-gray-400" />
-                        <span className="text-xs text-gray-500 mt-1">תמונה {index + 1}</span>
+                      {image.thumbnails?.small?.url ? (
+                        <img 
+                          src={image.thumbnails.small.url} 
+                          alt={`תמונה ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">
+                        תמונה {index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* מסמכים */}
+            {(documents.length > 0 || property.exclusivityDocument) && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  מסמכים
+                </h3>
+                <div className="space-y-2">
+                  {property.exclusivityDocument && (
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium">מסמך בלעדיות</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">זמין</Badge>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDocumentClick({ name: 'מסמך בלעדיות', url: property.exclusivityDocument })}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {documents.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium">{doc.filename || `מסמך ${index + 1}`}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{doc.type || 'מסמך'}</Badge>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => downloadDocument(doc)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -139,7 +220,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Building className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">סוג נכס:</span>
+                      <span className="text-sm text-gray-600">סוג:</span>
                       <span className="font-medium">{property.type || 'לא צוין'}</span>
                     </div>
                     
@@ -216,24 +297,6 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               </Card>
             )}
 
-            {/* מסמכים */}
-            {property.exclusivityDocument && (
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    מסמכים
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-gray-600">מסמך בלעדיות</span>
-                      <Badge variant="secondary">זמין</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* הצעות עד */}
             {property.offersUntil && (
               <Card>
@@ -255,7 +318,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
       {/* מודל להצגת תמונה גדולה */}
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+          <DialogContent className="max-w-6xl max-h-[95vh] p-2">
             <div className="relative">
               <Button
                 variant="ghost"
@@ -266,11 +329,31 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                 <X className="h-4 w-4" />
               </Button>
               <div className="flex items-center justify-center bg-gray-100 rounded-lg min-h-[400px]">
-                <div className="text-center">
-                  <ImageIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">תמונה: {selectedImage}</p>
-                </div>
+                <img 
+                  src={selectedImage} 
+                  alt="תמונה גדולה"
+                  className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                />
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* מודל להצגת מסמך */}
+      {selectedDocument && (
+        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="text-right">{selectedDocument.name}</DialogTitle>
+            </DialogHeader>
+            <div className="text-center py-8">
+              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">מסמך: {selectedDocument.name}</p>
+              <Button onClick={() => downloadDocument(selectedDocument)}>
+                <Download className="h-4 w-4 mr-2" />
+                הורד מסמך
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

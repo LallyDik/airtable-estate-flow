@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Property } from '@/types';
-import { MapPin, Home, Edit, Trash2, Eye, Maximize } from 'lucide-react';
+import { MapPin, Home, Edit, Trash2, Maximize } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -21,26 +21,27 @@ const PropertyCard = ({ property, onEdit, onDelete, onView }: PropertyCardProps)
     }).format(price);
   };
 
+  const handleCardClick = () => {
+    onView?.(property);
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
+    <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer" onClick={handleCardClick}>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold text-gray-800 cursor-pointer" onClick={() => onView?.(property)}>
+          <CardTitle className="text-lg font-semibold text-gray-800">
             {property.title}
           </CardTitle>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onView?.(property)}
-              className="p-2"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(property)}
+              onClick={(e) => handleButtonClick(e, () => onEdit(property))}
               className="p-2"
             >
               <Edit className="h-4 w-4" />
@@ -48,7 +49,7 @@ const PropertyCard = ({ property, onEdit, onDelete, onView }: PropertyCardProps)
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onDelete(property.id)}
+              onClick={(e) => handleButtonClick(e, () => onDelete(property.id))}
               className="p-2 text-red-600 hover:text-red-700"
             >
               <Trash2 className="h-4 w-4" />

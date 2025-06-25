@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post, TIME_SLOT_LABELS } from '@/types';
-import { Calendar, Clock, Edit, Trash2, Eye } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2 } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
@@ -21,30 +21,34 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
   
   const canEdit = !isPast;
 
+  const handleCardClick = () => {
+    if (onViewProperty && post.property) {
+      onViewProperty(post.property);
+    }
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
   return (
-    <Card className={`hover:shadow-lg transition-shadow duration-200 ${isPast ? 'opacity-75' : ''}`}>
+    <Card 
+      className={`hover:shadow-lg transition-shadow duration-200 cursor-pointer ${isPast ? 'opacity-75' : ''}`}
+      onClick={handleCardClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">
-            {post.propertyTitle || 'נכס ללא שם'}
+            {post.propertyTitle || 'ללא שם'}
           </CardTitle>
           <div className="flex gap-2">
-            {onViewProperty && post.property && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onViewProperty(post.property)}
-                className="p-2"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            )}
             {canEdit && (
               <>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onEdit(post)}
+                  onClick={(e) => handleButtonClick(e, () => onEdit(post))}
                   className="p-2"
                 >
                   <Edit className="h-4 w-4" />
@@ -52,7 +56,7 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onDelete(post.id)}
+                  onClick={(e) => handleButtonClick(e, () => onDelete(post.id))}
                   className="p-2 text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
