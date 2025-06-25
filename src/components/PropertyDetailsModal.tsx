@@ -47,17 +47,28 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
   const loadPropertyDetails = async () => {
     try {
       setLoading(true);
+      console.log('🔄 טוען פרטי נכס:', propertyId);
       
       // מצא את הנכס מהרשימה הקיימת
       const foundProperty = properties.find(p => p.id === propertyId);
+      console.log('🏠 נכס נמצא:', foundProperty);
       setProperty(foundProperty || null);
 
       // טען תמונות ומסמכים אם יש
       try {
+        console.log('📂 טוען תמונות ומסמכים...');
         const [imagesData, documentsData] = await Promise.all([
-          AirtableService.getImages(propertyId).catch(() => []),
-          AirtableService.getDocuments?.(propertyId).catch(() => []) || []
+          AirtableService.getImages(propertyId).catch((error) => {
+            console.error('שגיאה בטעינת תמונות:', error);
+            return [];
+          }),
+          AirtableService.getDocuments?.(propertyId).catch((error) => {
+            console.error('שגיאה בטעינת מסמכים:', error);
+            return [];
+          }) || []
         ]);
+        console.log('🖼️ תמונות שנטענו:', imagesData);
+        console.log('📄 מסמכים שנטענו:', documentsData);
         setImages(imagesData);
         setDocuments(documentsData);
       } catch (error) {
@@ -319,15 +330,20 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                             className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
                             onClick={() => handleImageClick(image)}
                           >
-                            {image.thumbnails?.small?.url ? (
+                            {image.url || image.thumbnails?.small?.url ? (
                               <img 
-                                src={image.thumbnails.small.url} 
+                                src={image.url || image.thumbnails.small.url} 
                                 alt={`תמונה ${index + 1}`}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.error('שגיאה בטעינת תמונה:', image);
+                                  e.currentTarget.style.display = 'none';
+                                }}
                               />
                             ) : (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <ImageIcon className="h-8 w-8 text-gray-400" />
+                                <span className="text-xs text-gray-500 mt-2">תמונה לא זמינה</span>
                               </div>
                             )}
                             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center">

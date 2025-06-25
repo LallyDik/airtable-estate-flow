@@ -11,9 +11,10 @@ interface PostCardProps {
   onEdit: (post: Post) => void;
   onDelete: (id: string) => void;
   onViewProperty?: (propertyId: string) => void;
+  properties?: any[]; // הוספת רשימת נכסים כדי לקבל את השם הנכון
 }
 
-const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => {
+const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: PostCardProps) => {
   const postDate = new Date(post.date);
   const today = new Date();
   const isPast = postDate < today;
@@ -32,11 +33,28 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty }: PostCardProps) => 
     action();
   };
 
-  // Get the property title with fallback
+  // Get the property title with proper fallback
   const getPropertyTitle = () => {
-    if (post.propertyTitle && post.propertyTitle.trim()) {
+    console.log('PostCard - Getting property title for post:', post);
+    console.log('PostCard - Properties available:', properties);
+    
+    // קודם נחפש לפי propertyTitle שנשמר בפרסום
+    if (post.propertyTitle && post.propertyTitle.trim() && post.propertyTitle !== 'נכס') {
+      console.log('PostCard - Using propertyTitle from post:', post.propertyTitle);
       return post.propertyTitle;
     }
+    
+    // אם לא, נחפש את הנכס ברשימת הנכסים
+    if (properties && properties.length > 0 && post.property) {
+      const property = properties.find(p => p.id === post.property);
+      if (property && property.title) {
+        console.log('PostCard - Found property in list:', property.title);
+        return property.title;
+      }
+    }
+    
+    // אחרת נשתמש בכותרת ברירת מחדל
+    console.log('PostCard - Using fallback title for property:', post.property);
     return `נכס ${post.property}`;
   };
 
