@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types';
+import { AirtableService } from '@/services/airtable';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthProps {
   onLogin: (user: User) => void;
@@ -12,15 +14,60 @@ interface AuthProps {
 const Auth = ({ onLogin }: AuthProps) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && name) {
-      onLogin({
-        id: email, // Using email as ID for demo
-        email,
-        name
-      });
+      setIsLoading(true);
+      
+      try {
+        console.log('🔍 בודק אם המשתמש קיים ב-Airtable:', email);
+        
+        // בדיקה אם המשתמש קיים בטבלת אנשי קשר
+        const users = await AirtableService.getUsers();
+        const existingUser = users.find((user: any) => 
+          user['אימייל']?.toLowerCase() === email.toLowerCase()
+        );
+        
+        if (!existingUser) {
+          console.log('❌ משתמש לא נמצא ב-Airtable');
+          toast({
+            title: "שגיאה בכניסה",
+            description: "משתמש זה לא רשום במערכת. אנא פנה למנהל המערכת.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('✅ משתמש נמצא ב-Airtable:', existingUser);
+        
+        // אם המשתמש קיים, נתן לו להכנס עם הפרטים מ-Airtable
+        const userData: User = {
+          id: existingUser.id || email,
+          email: existingUser['אימייל'] || email,
+          name: existingUser['שם מלא'] || existingUser['שם'] || name
+        };
+        
+        onLogin(userData);
+        
+        toast({
+          title: "כניסה בוצעה בהצלחה",
+          description: `ברוך הבא, ${userData.name}!`,
+        });
+        
+      } catch (error) {
+        console.error('❌ שגיאה בבדיקת משתמש:', error);
+        toast({
+          title: "שגיאה בכניסה",
+          description: "אירעה שגיאה בבדיקת הרשאות. אנא נסה שוב.",
+          variant: "destructive"
+        });
+      }
+      
+      setIsLoading(false);
     }
   };
 
@@ -43,6 +90,7 @@ const Auth = ({ onLogin }: AuthProps) => {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full"
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -53,10 +101,15 @@ const Auth = ({ onLogin }: AuthProps) => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full"
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              כניסה למערכת
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'בודק פרטים...' : 'כניסה למערכת'}
             </Button>
           </form>
         </CardContent>
