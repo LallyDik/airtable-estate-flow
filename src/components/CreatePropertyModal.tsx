@@ -10,6 +10,7 @@ import { Property } from '@/types';
 import { AirtableService } from '@/services/airtable';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+
 interface CreatePropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,6 +38,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
   const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>('');
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+
+  
 
   // עדכון הטופס כשפותחים לעריכה או יצירה חדשה
   useEffect(() => {
