@@ -142,7 +142,7 @@ const CreatePostModal = ({
     const postData = {
       property: selectedProperty,
       propertyTitle: propertyTitle,
-      date: selectedDate.toISOString().slice(0, 10), // <-- תיקון כאן!
+      date: selectedDate.toLocaleDateString('sv-SE'), // <-- זה התיקון!
       timeSlot: selectedTimeSlot as TimeSlot,
       broker: brokerId,
       createdAt: editPost?.createdAt || new Date().toISOString(),
@@ -250,10 +250,10 @@ const CreatePostModal = ({
           </div>
           
           <div>
-            <Label htmlFor="timeSlot">משבצת זמן</Label>
+            <Label htmlFor="timeSlot">זמן פרסום</Label>
             <Select value={selectedTimeSlot} onValueChange={(value: TimeSlot) => setSelectedTimeSlot(value)} dir="rtl">
               <SelectTrigger dir="rtl">
-                <SelectValue placeholder="בחר משבצת זמן" />
+                <SelectValue placeholder="בחר זמן פרסום" />
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {Object.entries(TIME_SLOT_LABELS).map(([key, label]) => (
