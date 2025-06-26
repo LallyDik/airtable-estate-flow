@@ -95,6 +95,11 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">
             {getPropertyTitle()}
+            {post.timeSlot === "נכס חדש" && (
+              <Badge className="ml-2" color="green">
+                פרסום נכס חדש
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex gap-2">
             {canEdit && (

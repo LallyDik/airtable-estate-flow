@@ -63,9 +63,7 @@ const CreatePostModal = ({
 
   // Check if property can be posted (3 days rule)
   const canPostProperty = (propertyId: string, date: Date, timeSlot?: TimeSlot | '') => {
-    // אם זה "נכס חדש" - תמיד אפשר לפרסם
     if (timeSlot === "נכס חדש") return true;
-
     const propertyPosts = existingPosts.filter(post =>
       post.property === propertyId &&
       post.timeSlot !== "נכס חדש" &&
@@ -82,9 +80,7 @@ const CreatePostModal = ({
 
   // Check daily post limit (2 posts per day)
   const getDailyPostCount = (date: Date, timeSlot?: TimeSlot | '') => {
-    // אם זה "נכס חדש" - לא בודקים מגבלה
     if (timeSlot === "נכס חדש") return 0;
-
     const dateStr = date.toLocaleDateString('sv-SE');
     return existingPosts.filter(post =>
       post.broker === brokerId &&
@@ -95,7 +91,6 @@ const CreatePostModal = ({
   };
 
   const canPostOnDay = (date: Date, timeSlot?: TimeSlot | '') => {
-    // אם זה "נכס חדש" - תמיד אפשר
     if (timeSlot === "נכס חדש") return true;
     return getDailyPostCount(date, timeSlot) < 2;
   };
