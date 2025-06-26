@@ -15,10 +15,10 @@ interface CreatePropertyModalProps {
   onClose: () => void;
   onSubmit: (property: Omit<Property, 'id'>) => void;
   editProperty?: Property;
-  brokerId: string;
+  brokerEmail: string; // שינוי כאן
 }
 
-const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId }: CreatePropertyModalProps) => {
+const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEmail }: CreatePropertyModalProps) => {
   const [formData, setFormData] = useState({
     title: '',
     neighborhood: '',
@@ -140,7 +140,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
     // Create full address from components
     const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
     
-    console.log('🔄 שולח נכס עם מתווך:', brokerId);
+    console.log('🔄 שולח נכס עם מתווך:', brokerEmail);
     console.log('📎 מסמך בלעדיות:', exclusivityDocument?.name || 'אין');
     console.log('🖼️ מספר תמונות:', images.length);
     
@@ -153,7 +153,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerId
         price: formData.price ? Number(formData.price) : 0,
         type: formData.type,
         size: 0,
-        broker: brokerId,
+        broker: brokerEmail, // שינוי כאן
         createdAt: editProperty?.createdAt || new Date().toISOString(),
         neighborhood: formData.neighborhood,
         city: formData.city,
