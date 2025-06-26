@@ -361,7 +361,7 @@ const PostsTab = ({ user }: PostsTabProps) => {
         onSubmit={handleCreatePost}
         editPost={editingPost}
         properties={properties}
-        brokerId={user.id}
+        brokerId={user.email}
         existingPosts={posts}
       />
 
