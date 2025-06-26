@@ -200,24 +200,15 @@ export class AirtableService {
   }
 
   // Properties API - השתמש רק בנוסחה של אימייל מתווך
-  static async getProperties(userEmailOrId: string) {
-    console.log('🔍 מבקש נכסים עבור:', userEmailOrId);
-    
+  static async getProperties(userEmail: string) {
+    console.log('🔍 מבקש נכסים עבור:', userEmail);
+
     try {
-      // נבדוק אם זה Record ID או אימייל
-      const isRecordId = userEmailOrId.startsWith('rec');
-      let filterFormula;
-      
-      if (isRecordId) {
-        // אם זה Record ID, נחפש ישירות לפי Record ID במתווך
-        filterFormula = `FIND('${userEmailOrId}', ARRAYJOIN({מתווך בעל בלעדיות})) > 0`;
-      } else {
-        // אם זה אימייל, נחפש לפי אימייל המתווך
-        filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${userEmailOrId}'`;
-      }
-      
+      // תמיד חפש לפי אימייל
+      const filterFormula = `{אימייל (from מתווך בעל בלעדיות)} = '${userEmail}'`;
+
       console.log('📝 נוסחת סינון:', filterFormula);
-      
+
       const response = await fetch(
         `${BASE_URL}/נכסים?filterByFormula=${encodeURIComponent(filterFormula)}`,
         { headers }
@@ -247,7 +238,7 @@ export class AirtableService {
             price: record.fields['מחיר שיווק'] || 0,
             type: record.fields['סוג נכס'] || 'לא צוין',
             size: record.fields['שטח'] || 0,
-            broker: userEmailOrId,
+            broker: userEmail,
             createdAt: record.fields['create time'] || new Date().toISOString(),
             rooms: record.fields['כמות חדרים'] || '',
             neighborhood: record.fields['שכונה'] || '',
