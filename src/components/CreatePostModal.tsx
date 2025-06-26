@@ -62,41 +62,42 @@ const CreatePostModal = ({
   };
 
   // Check if property can be posted (3 days rule)
-  const canPostProperty = (propertyId: string, date: Date) => {
-    const property = properties.find(p => p.id === propertyId);
-    if (!property) return false;
-    
-    // Check if property was posted in the last 3 days
-    const propertyPosts = existingPosts.filter(post => 
-      post.property === propertyId && 
-      post.id !== editPost?.id // Exclude current edit
+  const canPostProperty = (propertyId: string, date: Date, timeSlot?: TimeSlot | '') => {
+    // אם זה "נכס חדש" - תמיד אפשר לפרסם
+    if (timeSlot === "נכס חדש") return true;
+
+    const propertyPosts = existingPosts.filter(post =>
+      post.property === propertyId &&
+      post.timeSlot !== "נכס חדש" &&
+      post.id !== editPost?.id
     );
-    
     if (propertyPosts.length === 0) return true;
-    
-    // Find the most recent post for this property
-    const latestPost = propertyPosts.sort((a, b) => 
+    const latestPost = propertyPosts.sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )[0];
-    
     const latestPostDate = new Date(latestPost.date);
     const daysDifference = (date.getTime() - latestPostDate.getTime()) / (1000 * 3600 * 24);
-    
     return daysDifference >= 3;
   };
 
   // Check daily post limit (2 posts per day)
-  const getDailyPostCount = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return existingPosts.filter(post => 
-      post.broker === brokerId && 
-      post.date.startsWith(dateStr) &&
-      post.id !== editPost?.id // Exclude current edit
+  const getDailyPostCount = (date: Date, timeSlot?: TimeSlot | '') => {
+    // אם זה "נכס חדש" - לא בודקים מגבלה
+    if (timeSlot === "נכס חדש") return 0;
+
+    const dateStr = date.toLocaleDateString('sv-SE');
+    return existingPosts.filter(post =>
+      post.broker === brokerId &&
+      post.date === dateStr &&
+      post.timeSlot !== "נכס חדש" &&
+      post.id !== editPost?.id
     ).length;
   };
 
-  const canPostOnDay = (date: Date) => {
-    return getDailyPostCount(date) < 2;
+  const canPostOnDay = (date: Date, timeSlot?: TimeSlot | '') => {
+    // אם זה "נכס חדש" - תמיד אפשר
+    if (timeSlot === "נכס חדש") return true;
+    return getDailyPostCount(date, timeSlot) < 2;
   };
 
   // Get available properties for the selected date
@@ -114,7 +115,10 @@ const CreatePostModal = ({
     
     // Get proper property title from multiple possible fields
     let propertyTitle = 'נכס לפרסום'; // default fallback
-    
+    // Use the property title from the properties table if available
+    if (property && property.title && typeof property.title === 'string' && property.title.trim()) {
+      propertyTitle = property.title;
+    }
     if (property) {
       // Try different field names that might contain the property title
       const possibleTitles = [
@@ -164,38 +168,35 @@ const CreatePostModal = ({
     today.setHours(0, 0, 0, 0);
     const checkDate = new Date(date);
     checkDate.setHours(0, 0, 0, 0);
-    
+
     const maxDate = new Date();
     maxDate.setDate(today.getDate() + 8);
     maxDate.setHours(0, 0, 0, 0);
-    
-    // Outside allowed range
+
     if (checkDate < today || checkDate > maxDate) return true;
-    
-    // Block Friday (5) and Saturday (6)
     const dayOfWeek = checkDate.getDay();
     if (dayOfWeek === 5 || dayOfWeek === 6) return true;
-    
-    // Daily limit reached
-    if (!canPostOnDay(date)) return true;
-    
+
+    // Daily limit reached (לא בודק אם זה "נכס חדש")
+    if (!canPostOnDay(date, selectedTimeSlot)) return true;
+
     return false;
   };
 
   const getValidationMessages = () => {
     const messages: string[] = [];
-    
-    if (selectedDate) {
-      const dailyCount = getDailyPostCount(selectedDate);
+
+    if (selectedDate && selectedTimeSlot !== "נכס חדש") {
+      const dailyCount = getDailyPostCount(selectedDate, selectedTimeSlot);
       if (dailyCount >= 2) {
         messages.push('הגעת למגבלת 2 פרסומים ביום זה');
       }
-      
-      if (selectedProperty && !canPostProperty(selectedProperty, selectedDate)) {
+
+      if (selectedProperty && !canPostProperty(selectedProperty, selectedDate, selectedTimeSlot)) {
         messages.push('נכס זה פורסם בתוך 3 הימים האחרונים - יש להמתין');
       }
     }
-    
+
     return messages;
   };
 

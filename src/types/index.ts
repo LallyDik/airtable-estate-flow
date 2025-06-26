@@ -25,6 +25,7 @@ export interface Property {
   rooms?: string;
   offersUntil?: string;
   exclusivityDocument?: string; // URL to the uploaded document
+  marketingType?: string;
 }
 
 export interface Post {

@@ -38,6 +38,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
   const [exclusivityDocumentUrl, setExclusivityDocumentUrl] = useState<string>('');
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [marketingType, setMarketingType] = useState<'מכירה' | 'השכרה'>('מכירה');
 
   
 
@@ -165,6 +166,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         rooms: formData.rooms,
         offersUntil: formData.offersUntil,
         exclusivityDocument: '', // נעדכן בנפרד
+        marketingType: marketingType,
       };
 
       // העלאת מסמך בלעדיות אם קיים
@@ -182,7 +184,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
       onClose();
     } catch (error) {
       console.error('❌ שגיאה בשמירת נכס:', error);
-      alert('שגיאה בשמירת הנכס. נסה שנית.');
+      alert('שגיאה בששמירת הנכס. נסה שנית.');
     }
   };
 
@@ -428,6 +430,25 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                 <p className="text-sm text-gray-600 mt-2">ניתן לבחור מספר תמונות</p>
               </div>
             </div>
+          </div>
+          
+          {/* הוספת שדה סוג שיווק */}
+          <div>
+            <Label htmlFor="marketingType">סוג שיווק *</Label>
+            <Select
+              value={marketingType}
+              onValueChange={(value) => setMarketingType(value as 'מכירה' | 'השכרה')}
+              required
+              dir="rtl"
+            >
+              <SelectTrigger dir="rtl">
+                <SelectValue placeholder="בחר סוג שיווק" />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value="מכירה">מכירה</SelectItem>
+                <SelectItem value="השכרה">השכרה</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex gap-2 pt-4">

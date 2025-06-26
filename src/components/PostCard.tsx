@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,26 +55,31 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
       const property = properties.find(p => p.id === post.property);
       console.log('PostCard - נכס שנמצא ברשימה:', property);
       
+      let propertyTitle = 'נכס לפרסום'; // default fallback
+
       if (property) {
-        // נסה מספר שדות אפשריים לשם הנכס
+        // Try different field names that might contain the property title
         const possibleTitles = [
           property.title,
           property['שם נכס לתצוגה'],
           property['שם נכס'],
-          property.name
+          property.address
         ];
         
         for (const title of possibleTitles) {
           if (title && 
               typeof title === 'string' && 
               title.trim() && 
-              !title.includes('rec') &&
+              !title.includes('rec') && // not an Airtable ID
               title !== 'נכס') {
-            console.log('PostCard - מצא שם נכס תקין:', title);
-            return title;
+            propertyTitle = title;
+            break;
           }
         }
       }
+    
+      console.log('PostCard - מצא שם נכס תקין:', propertyTitle);
+      return propertyTitle;
     }
     
     console.log('PostCard - לא נמצא שם נכס תקין, משתמש בברירת מחדל');

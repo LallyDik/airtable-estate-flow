@@ -21,6 +21,7 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
     'עיר': property.city,
     'רחוב': property.street,
     'קומה': property.floor,
+    'סוג שיווק': property.marketingType, // הוסף שדה זה
   };
 
   // הוספת קישור למתווך רק בעת יצירת נכס חדש, לא בעדכון
