@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -50,11 +49,11 @@ const CreatePostModal = ({
     }
   }, [editPost]);
 
-  // Helper function to get available dates (7 days from today)
+  // Helper function to get available dates (8 days from today)
   const getAvailableDates = () => {
     const today = new Date();
     const dates: Date[] = [];
-    for (let i = 0; i <= 7; i++) {
+    for (let i = 0; i <= 8; i++) {
       const date = new Date();
       date.setDate(today.getDate() + i);
       dates.push(date);
@@ -113,8 +112,30 @@ const CreatePostModal = ({
     
     const property = properties.find(p => p.id === selectedProperty);
     
-    // Ensure we have a proper property title
-    const propertyTitle = property?.title || property?.address || `נכס ${selectedProperty}`;
+    // Get proper property title from multiple possible fields
+    let propertyTitle = 'נכס לפרסום'; // default fallback
+    
+    if (property) {
+      // Try different field names that might contain the property title
+      const possibleTitles = [
+        property.title,
+        property['שם נכס לתצוגה'],
+        property['שם נכס'],
+        property.name,
+        property.address
+      ];
+      
+      for (const title of possibleTitles) {
+        if (title && 
+            typeof title === 'string' && 
+            title.trim() && 
+            !title.includes('rec') && // not an Airtable ID
+            title !== 'נכס') {
+          propertyTitle = title;
+          break;
+        }
+      }
+    }
     
     console.log('CreatePostModal - Selected property:', property);
     console.log('CreatePostModal - Property title:', propertyTitle);
@@ -146,7 +167,7 @@ const CreatePostModal = ({
     checkDate.setHours(0, 0, 0, 0);
     
     const maxDate = new Date();
-    maxDate.setDate(today.getDate() + 7);
+    maxDate.setDate(today.getDate() + 8);
     maxDate.setHours(0, 0, 0, 0);
     
     // Outside allowed range
@@ -194,11 +215,11 @@ const CreatePostModal = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="property">בחר נכס</Label>
-            <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-              <SelectTrigger>
+            <Select value={selectedProperty} onValueChange={setSelectedProperty} dir="rtl">
+              <SelectTrigger dir="rtl">
                 <SelectValue placeholder="בחר נכס לפרסום" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 {getAvailableProperties().map((property) => (
                   <SelectItem key={property.id} value={property.id}>
                     {property.title} - {property.address}
@@ -214,7 +235,7 @@ const CreatePostModal = ({
           </div>
           
           <div>
-            <Label>בחר תאריך (עד 7 ימים מהיום, לא כולל שישי ושבת)</Label>
+            <Label>בחר תאריך (עד 8 ימים מהיום)</Label>
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -231,11 +252,11 @@ const CreatePostModal = ({
           
           <div>
             <Label htmlFor="timeSlot">משבצת זמן</Label>
-            <Select value={selectedTimeSlot} onValueChange={(value: TimeSlot) => setSelectedTimeSlot(value)}>
-              <SelectTrigger>
+            <Select value={selectedTimeSlot} onValueChange={(value: TimeSlot) => setSelectedTimeSlot(value)} dir="rtl">
+              <SelectTrigger dir="rtl">
                 <SelectValue placeholder="בחר משבצת זמן" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 {Object.entries(TIME_SLOT_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}
