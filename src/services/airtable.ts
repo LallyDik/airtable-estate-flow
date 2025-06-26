@@ -165,6 +165,7 @@ export class AirtableService {
       }
       
       // אם זה לא Record ID, נחפש לפי אימייל
+      console.log('📧 מחפש לפי אימייל:', emailOrId);
       const filterFormula = `{אימייל} = '${emailOrId}'`;
       const response = await fetch(
         `${BASE_URL}/אנשי קשר?filterByFormula=${encodeURIComponent(filterFormula)}`,
@@ -177,13 +178,14 @@ export class AirtableService {
       }
       
       const data = await response.json();
+      console.log('📊 תוצאות חיפוש מתווך:', data);
       
       if (data.records && data.records.length > 0) {
         const brokerRecordId = data.records[0].id;
         console.log('✅ נמצא מתווך עם Record ID:', brokerRecordId);
         return brokerRecordId;
       } else {
-        console.log('⚠️ לא נמצא מתווך עבור האימייל');
+        console.log('⚠️ לא נמצא מתווך עבור האימייל:', emailOrId);
         return null;
       }
     } catch (error) {
@@ -272,13 +274,20 @@ export class AirtableService {
 
   static async createProperty(property: Omit<Property, 'id'>) {
     console.log('🏠 יוצר נכס חדש:', property.title);
-    console.log('👤 מתווך:', property.broker);
+    console.log('👤 מתווך ID/Email:', property.broker);
     
     // קבלת Record ID של המתווך לפני יצירת הנכס - תמיכה גם ב-Record ID וגם באימייל
     const brokerRecordId = await this.getBrokerRecordIdByEmailOrId(property.broker);
     
+    console.log('🔍 תוצאת חיפוש מתווך:', { 
+      input: property.broker, 
+      output: brokerRecordId 
+    });
+    
     if (!brokerRecordId) {
-      throw new Error(`לא נמצא מתווך עבור: ${property.broker}`);
+      const errorMessage = `לא נמצא מתווך עבור: ${property.broker}`;
+      console.error('❌', errorMessage);
+      throw new Error(errorMessage);
     }
     
     console.log('✅ Record ID של המתווך:', brokerRecordId);
