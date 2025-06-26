@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -121,7 +122,6 @@ const CreatePostModal = ({
         property.title,
         property['שם נכס לתצוגה'],
         property['שם נכס'],
-        property.name,
         property.address
       ];
       
