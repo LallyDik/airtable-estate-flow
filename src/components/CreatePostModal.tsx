@@ -234,7 +234,7 @@ const CreatePostModal = ({
           </div>
           
           <div>
-            <Label>בחר תאריך (עד 8 ימים מהיום)</Label>
+            <Label>בחר תאריך (עד שבוע מהיום)</Label>
             <Calendar
               mode="single"
               selected={selectedDate}

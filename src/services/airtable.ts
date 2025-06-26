@@ -541,19 +541,20 @@ export class AirtableService {
   }
 
   static async createPost(postData: Omit<Post, 'id'>) {
-    const fields = {
-      'נכס לפרסום': [postData.property],
-      'כותרת נכס': postData.propertyTitle,
-      'תאריך פרסום': postData.date,
-      'משבצת זמן': postData.timeSlot,
-      'מתווך': postData.broker,
-      'createdAt': postData.createdAt,
-    };
+    const fields = mapPostToAirtableFields(postData);
+
     const response = await fetch(`${BASE_URL}/פרסומי נכסים`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ fields }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ שגיאה ביצירת פרסום:', errorText);
+      throw new Error(`Failed to create post: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
     return data;
   }
