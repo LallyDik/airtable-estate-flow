@@ -218,7 +218,7 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
         onClose={handleCloseModal}
         onSubmit={handleCreateProperty}
         editProperty={editingProperty}
-        brokerId={user.id}
+        brokerEmail={user.email} // <-- זה השדה הנכון!
       />
 
       {selectedPropertyId && (
