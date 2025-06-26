@@ -32,7 +32,7 @@ export interface Post {
   property: string;
   propertyTitle?: string;
   date: string;
-  timeSlot: 'morning' | 'afternoon' | 'evening';
+  timeSlot: "morning" | "afternoon" | "evening" | "נכס חדש";
   broker: string;
   createdAt: string;
 }
@@ -43,8 +43,7 @@ export interface Image {
   url: string;
   description?: string;
 }
-
-export type TimeSlot = 'morning' | 'afternoon' | 'evening';
+export type TimeSlot = "morning" | "afternoon" | "evening" | "נכס חדש";
 
 export const TIME_SLOT_LABELS = {
   morning: 'בוקר',

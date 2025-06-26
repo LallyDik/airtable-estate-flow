@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -143,7 +142,7 @@ const CreatePostModal = ({
     const postData = {
       property: selectedProperty,
       propertyTitle: propertyTitle,
-      date: selectedDate.toISOString().split('T')[0],
+      date: selectedDate.toISOString().slice(0, 10), // <-- תיקון כאן!
       timeSlot: selectedTimeSlot as TimeSlot,
       broker: brokerId,
       createdAt: editPost?.createdAt || new Date().toISOString(),

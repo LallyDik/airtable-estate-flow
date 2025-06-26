@@ -73,6 +73,9 @@ const mapPostToAirtableFields = (post: Omit<Post, 'id'>, propertyRecordId?: stri
     case 'evening':
       timeSlotValue = 'ערב';
       break;
+    case 'נכס חדש':
+      timeSlotValue = 'נכס חדש';
+      break;
     default:
       timeSlotValue = 'בוקר';
   }
@@ -537,37 +540,22 @@ export class AirtableService {
     return 'morning'; // ברירת מחדל
   }
 
-  static async createPost(post: Omit<Post, 'id'>) {
-    console.log('📝 יוצר פרסום חדש:', post);
-    
-    // קבלת Record ID של המתווך
-    const brokerRecordId = await this.getBrokerRecordIdByEmailOrId(post.broker);
-    
-    if (!brokerRecordId) {
-      throw new Error(`לא נמצא מתווך עבור: ${post.broker}`);
-    }
-    
-    const airtableFields = mapPostToAirtableFields(post);
-    // הוספת המתווך
-    airtableFields['מתווך'] = [brokerRecordId];
-    
+  static async createPost(postData: Omit<Post, 'id'>) {
+    const fields = {
+      'נכס לפרסום': [postData.property],
+      'כותרת נכס': postData.propertyTitle,
+      'תאריך פרסום': postData.date,
+      'משבצת זמן': postData.timeSlot,
+      'מתווך': postData.broker,
+      'createdAt': postData.createdAt,
+    };
     const response = await fetch(`${BASE_URL}/פרסומי נכסים`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        fields: airtableFields
-      })
+      body: JSON.stringify({ fields }),
     });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ שגיאה ביצירת פרסום:', errorText);
-      throw new Error(`Failed to create post: ${response.status} ${response.statusText}`);
-    }
-    
     const data = await response.json();
-    console.log('✅ פרסום נוצר בהצלחה:', data);
-    return { id: data.id, ...data.fields };
+    return data;
   }
 
   static async updatePost(id: string, fields: Partial<Post>) {

@@ -42,28 +42,35 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
 
   const handleCreateProperty = async (propertyData: Omit<Property, 'id'>) => {
     try {
+      let newProperty;
       if (editingProperty) {
         await AirtableService.updateProperty(editingProperty.id, propertyData);
-        toast({
-          title: "נכס עודכן",
-          description: "הנכס עודכן בהצלחה במערכת"
-        });
+        toast({ title: "הנכס עודכן בהצלחה" });
       } else {
-        await AirtableService.createProperty(propertyData);
-        toast({
-          title: "נכס נוסף",
-          description: "הנכס נוסף בהצלחה למערכת"
+        newProperty = await AirtableService.createProperty({
+          ...propertyData,
+          broker: user.email
         });
+        toast({ title: "נכס חדש נוסף בהצלחה" });
+
+        // יצירת פרסום חדש אוטומטית
+        if (newProperty && newProperty.id) {
+          const today = new Date();
+          const postData = {
+            property: newProperty.id,
+            propertyTitle: newProperty.title || newProperty['שם נכס לתצוגה'] || newProperty.address,
+            date: today.toISOString().slice(0, 10), // YYYY-MM-DD
+            timeSlot: "נכס חדש" as "נכס חדש", // ערך ייחודי, cast to allowed type
+            broker: user.email,
+            createdAt: today.toISOString(),
+          };
+          await AirtableService.createPost(postData);
+        }
       }
+      setIsModalOpen(false);
       loadProperties();
-      setEditingProperty(undefined);
     } catch (error) {
-      toast({
-        title: "שגיאה בשמירת נכס",
-        description: "לא ניתן לשמור את הנכס. נסה שנית.",
-        variant: "destructive"
-      });
-      console.error('Error saving property:', error);
+      toast({ title: "שגיאה בשמירת נכס", variant: "destructive" });
     }
   };
 
