@@ -32,8 +32,8 @@ const PostsTab = ({ user }: PostsTabProps) => {
     try {
       setLoading(true);
       const [postsData, propertiesData] = await Promise.all([
-        AirtableService.getPosts(user.id),
-        AirtableService.getProperties(user.id)
+        AirtableService.getPosts(user.email),        // <-- שלח אימייל
+        AirtableService.getProperties(user.email)    // <-- שלח אימייל
       ]);
       setPosts(postsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setProperties(propertiesData);
