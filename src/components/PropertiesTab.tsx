@@ -24,21 +24,17 @@ const PropertiesTab = ({ user }: PropertiesTabProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // ודא שאתה שולח אימייל!
     loadProperties();
   }, [user]);
 
   const loadProperties = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await AirtableService.getProperties(user.id);
-      setProperties(data);
+      const properties = await AirtableService.getProperties(user.email); // <-- כאן!
+      setProperties(properties);
     } catch (error) {
-      toast({
-        title: "שגיאה בטעינת נכסים",
-        description: "לא ניתן לטעון את הנכסים. בדוק את החיבור ל-Airtable.",
-        variant: "destructive"
-      });
-      console.error('Error loading properties:', error);
+      // טיפול בשגיאה
     } finally {
       setLoading(false);
     }
