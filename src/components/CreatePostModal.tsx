@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -151,6 +152,10 @@ const CreatePostModal = ({
     // Outside allowed range
     if (checkDate < today || checkDate > maxDate) return true;
     
+    // Block Friday (5) and Saturday (6)
+    const dayOfWeek = checkDate.getDay();
+    if (dayOfWeek === 5 || dayOfWeek === 6) return true;
+    
     // Daily limit reached
     if (!canPostOnDay(date)) return true;
     
@@ -209,7 +214,7 @@ const CreatePostModal = ({
           </div>
           
           <div>
-            <Label>בחר תאריך (עד 7 ימים מהיום)</Label>
+            <Label>בחר תאריך (עד 7 ימים מהיום, לא כולל שישי ושבת)</Label>
             <Calendar
               mode="single"
               selected={selectedDate}
