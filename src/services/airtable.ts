@@ -541,7 +541,18 @@ export class AirtableService {
   }
 
   static async createPost(postData: Omit<Post, 'id'>) {
+    // קבל מזהה רשומה של המתווך
+    const brokerRecordId = await this.getBrokerRecordIdByEmailOrId(postData.broker);
+
+    if (!brokerRecordId) {
+      throw new Error('לא נמצא מתווך עבור הפרסום');
+    }
+
+    // צור את השדות לפרסום
     const fields = mapPostToAirtableFields(postData);
+
+    // הוסף קישור למתווך
+    fields['מתווך'] = [brokerRecordId];
 
     const response = await fetch(`${BASE_URL}/פרסומי נכסים`, {
       method: 'POST',
