@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -53,9 +54,16 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
     }
   }
 
-  // הוספת מסמך בלעדיות אם קיים
-  if (property.exclusivityDocument) {
-    fields['מסמך בלעדיות'] = property.exclusivityDocument;
+  // הוספת מסמך בלעדיות אם קיים - בפורמט Attachment הנכון
+  if (property.exclusivityDocument && property.exclusivityDocument.trim() !== '') {
+    // בדיקה אם זה URL תקין
+    if (property.exclusivityDocument.startsWith('http')) {
+      fields['מסמך בלעדיות'] = [{
+        url: property.exclusivityDocument,
+        filename: 'מסמך בלעדיות'
+      }];
+      console.log('📎 מוסיף מסמך בלעדיות בפורמט Attachment:', fields['מסמך בלעדיות']);
+    }
   }
 
   console.log('📝 שדות ליצירת/עדכון נכס:', fields);
