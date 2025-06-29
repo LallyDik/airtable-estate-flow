@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 interface CreatePropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (property: Omit<Property, 'id'>) => void;
+  onSubmit: (property: Omit<Property, 'id'>) => Promise<any>;
   editProperty?: Property;
   brokerEmail: string;
 }
@@ -217,32 +217,46 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         } catch (error) {
           console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
           console.log('⚠️ ממשיך ליצור נכס בלי מסמך בלעדיות');
-          // לא נעצור את התהליך - נמשיך ליצור את הנכס
         }
       }
 
       // קריאה לפונקציה המקורית - כאן מתבצעת הפעולה האמיתית
-      onSubmit(propertyData);
+      const createdProperty = await onSubmit(propertyData);
+      console.log('✅ נכס נוצר:', createdProperty);
 
-      // העלאת תמונות בנפרד לטבלת תמונות (אחרי יצירת הנכס)
-      if (images.length > 0) {
+      // קבלת ID הנכס שנוצר
+      const propertyId = createdProperty?.id || createdProperty?.record?.id;
+      console.log('🆔 ID הנכס שנוצר:', propertyId);
+
+      // העלאת תמונות לטבלת תמונות אם יש מזהה נכס
+      if (images.length > 0 && propertyId) {
         try {
-          console.log('🖼️ מעלה תמונות...');
-          // כרגע נעלה את התמונות אבל לא נחכה להן
-          // כי אנחנו צריכים את מזהה הנכס תחילה
-          FileUploadService.uploadMultipleFiles(images)
-            .then(imageUrls => {
-              console.log('✅ כל התמונות הועלו בהצלחה:', imageUrls);
-              // כאן אפשר לעדכן את טבלת התמונות ב-Airtable אם רוצים
-            })
-            .catch(error => {
-              console.error('❌ שגיאה בהעלאת תמונות:', error);
-              console.log('⚠️ הנכס נוצר בהצלחה אבל התמונות לא הועלו');
-            });
+          console.log('🖼️ מעלה תמונות לטבלת תמונות...');
+          
+          // העלאת כל תמונה בנפרד
+          for (let i = 0; i < images.length; i++) {
+            const image = images[i];
+            console.log(`📤 מעלה תמונה ${i + 1}/${images.length}:`, image.name);
+            
+            try {
+              // העלאת התמונה לשרת קבצים
+              const imageUrl = await FileUploadService.uploadFile(image);
+              console.log('✅ תמונה הועלה לשרת:', imageUrl);
+              
+              // שמירת התמונה בטבלת תמונות
+              await AirtableService.uploadImageToImagesTable(propertyId, imageUrl, image.name);
+              console.log('✅ תמונה נשמרה בטבלת תמונות');
+              
+            } catch (imageError) {
+              console.error(`❌ שגיאה בהעלאת תמונה ${i + 1}:`, imageError);
+              // ממשיכים עם התמונות הבאות גם אם אחת נכשלה
+            }
+          }
+          
+          console.log('✅ סיום העלאת תמונות');
         } catch (error) {
           console.error('❌ שגיאה בהעלאת תמונות:', error);
           console.log('⚠️ הנכס נוצר בהצלחה אבל התמונות לא הועלו');
-          // לא נעצור את התהליך בגלל שגיאת תמונות
         }
       }
 

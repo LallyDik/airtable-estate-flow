@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -387,18 +386,22 @@ export class AirtableService {
     }
   }
 
-  // פונקציה להעלאת תמונות לטבלת תמונות - עם קישור זמני
-  static async uploadImageToImagesTable(propertyId: string, imageFile: File, imageName: string) {
-    console.log('🖼️ מעלה תמונה לטבלת תמונות:', imageName);
-    console.log('⚠️ הערה: זהו קישור זמני - יש צורך בשירות העלאת קבצים חיצוני');
+  // פונקציה להעלאת תמונות לטבלת תמונות - עם URL אמיתי
+  static async uploadImageToImagesTable(propertyId: string, imageUrl: string, imageName: string) {
+    console.log('🖼️ שומר תמונה בטבלת תמונות:', imageName);
+    console.log('🔗 URL התמונה:', imageUrl);
     
     try {
-      // נשתמש בגישה רגילה עם JSON
-      // כרגע נשמור רק פרטי הקישור הזמני
       const fields = {
         'נכסים': [propertyId], // קישור לנכס
-        'קישור לתמונה': `זמני - ${imageFile.name} (הועלה ${new Date().toLocaleDateString('he-IL')})`
+        'שם התמונה': imageName,
+        'תמונות וסרטונים': [{
+          url: imageUrl,
+          filename: imageName
+        }]
       };
+      
+      console.log('📝 שדות לשמירה בטבלת תמונות:', fields);
       
       const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
         method: 'POST',
@@ -407,17 +410,17 @@ export class AirtableService {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ שגיאה בהעלאת תמונה:', errorData);
-        throw new Error(`Failed to upload image: ${response.status} ${response.statusText}`);
+        const errorData = await response.text();
+        console.error('❌ שגיאה בשמירת תמונה:', errorData);
+        throw new Error(`Failed to save image: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('✅ תמונה הועלה בהצלחה לטבלת תמונות:', data);
+      console.log('✅ תמונה נשמרה בהצלחה בטבלת תמונות:', data);
       return data;
       
     } catch (error) {
-      console.error('❌ שגיאה בהעלאת תמונה:', error);
+      console.error('❌ שגיאה בשמירת תמונה:', error);
       throw error;
     }
   }
