@@ -207,7 +207,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         marketingType: marketingType,
       };
 
-      // העלאת מסמך בלעדיות אם קיים
+      // ניסיון העלאת מסמך בלעדיות - אם נכשל, נמשיך בלי
       if (exclusivityDocument) {
         try {
           console.log('📤 מעלה מסמך בלעדיות...');
@@ -216,8 +216,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
           console.log('✅ מסמך בלעדיות הועלה:', documentUrl);
         } catch (error) {
           console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
-          alert('שגיאה בהעלאת מסמך בלעדיות. אנא נסה שנית.');
-          return;
+          console.log('⚠️ ממשיך ליצור נכס בלי מסמך בלעדיות');
+          // לא נעצור את התהליך - נמשיך ליצור את הנכס
         }
       }
 
@@ -237,9 +237,11 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
             })
             .catch(error => {
               console.error('❌ שגיאה בהעלאת תמונות:', error);
+              console.log('⚠️ הנכס נוצר בהצלחה אבל התמונות לא הועלו');
             });
         } catch (error) {
           console.error('❌ שגיאה בהעלאת תמונות:', error);
+          console.log('⚠️ הנכס נוצר בהצלחה אבל התמונות לא הועלו');
           // לא נעצור את התהליך בגלל שגיאת תמונות
         }
       }
