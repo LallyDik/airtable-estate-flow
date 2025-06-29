@@ -34,7 +34,7 @@ const PropertyBasicInfo = ({ property, formatPrice }: PropertyBasicInfoProps) =>
             <span className="font-medium">{property.rooms || 'לא צוין'}</span>
           </div>
           
-          {property.size && (
+          {property.size && property.size > 0 && (
             <div className="flex items-center gap-2">
               <Maximize className="h-4 w-4 text-gray-500" />
               <span className="text-sm text-gray-600">שטח:</span>

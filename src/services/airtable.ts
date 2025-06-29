@@ -62,7 +62,7 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
   return fields;
 };
 
-// פונקציה למיפוי נתוני פרסום לשדות Airtable
+// פונקציה למיפוי נתוני פרסום לשדות Airtable - עדכון לסכמה החדשה
 const mapPostToAirtableFields = (post: Omit<Post, 'id'>, propertyRecordId?: string) => {
   // מיפוי זמן פרסום לערכים המתאימים ב-Airtable
   let timeSlotValue = '';
@@ -445,15 +445,11 @@ export class AirtableService {
     }
   }
 
-  // Posts API - עדכון לטבלה "פרסומי נכסים" עם השדות הנכונים
+  // Posts API - עדכון לטבלה "פרסומי נכסים" עם השדות החדשים
   static async getPosts(userEmailOrId: string) {
     console.log('🔍 מבקש פרסומים עבור:', userEmailOrId);
     
     try {
-      // ראשית נבדוק איזה שדות יש בטבלה
-      console.log('📋 בודק שדות בטבלת פרסומי נכסים...');
-      await this.getPostsTableFields();
-      
       // נקבל את כל הפרסומים ונסנן לפי המתווך
       const response = await fetch(`${BASE_URL}/פרסומי נכסים`, { headers });
       
@@ -613,7 +609,7 @@ export class AirtableService {
     console.log('✅ פרסום נמחק בהצלחה');
   }
 
-  // Images API - שינוי לטבלה "טבלת תמונות"
+  // Images API - עדכון לטבלה "טבלת תמונות" עם השדות החדשים
   static async getImages(propertyId: string) {
     console.log('🖼️ מבקש תמונות עבור נכס:', propertyId);
     
@@ -647,14 +643,14 @@ export class AirtableService {
         let imageUrl = '';
         let thumbnails = null;
         
-        // בדיקת שדה תמונה מסוג Attachment
-        if (record.fields['תמונה'] && Array.isArray(record.fields['תמונה']) && record.fields['תמונה'].length > 0) {
-          const attachment = record.fields['תמונה'][0];
+        // בדיקת שדה תמונות וסרטונים מסוג Attachment
+        if (record.fields['תמונות וסרטונים'] && Array.isArray(record.fields['תמונות וסרטונים']) && record.fields['תמונות וסרטונים'].length > 0) {
+          const attachment = record.fields['תמונות וסרטונים'][0];
           imageUrl = attachment.url;
           thumbnails = attachment.thumbnails || null;
           console.log('🖼️ נמצאה תמונה מסוג Attachment:', imageUrl);
         }
-        // בדיקת שדה קישור לתמונה - רק אם זה קישור אמיתי
+        // בדיקת שדה קישור לתמונה מהפורמולה
         else if (record.fields['קישור לתמונה'] && 
                  typeof record.fields['קישור לתמונה'] === 'string' &&
                  !record.fields['קישור לתמונה'].includes('זמני') &&
@@ -667,7 +663,7 @@ export class AirtableService {
         const imageData = {
           id: record.id,
           url: imageUrl,
-          filename: record.fields['שם קובץ'] || 'תמונה',
+          filename: record.fields['שם התמונה'] || 'תמונה',
           thumbnails: thumbnails,
           ...record.fields
         };
