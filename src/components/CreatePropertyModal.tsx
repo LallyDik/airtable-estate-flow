@@ -5,18 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUp, X, FileImage, AlertCircle } from 'lucide-react';
+import { FileUp, X, FileImage, AlertCircle, Loader2 } from 'lucide-react';
 import { Property } from '@/types';
 import { AirtableService } from '@/services/airtable';
+import { FileUploadService } from '@/services/fileUpload';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
 
 interface CreatePropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (property: Omit<Property, 'id'>) => void;
   editProperty?: Property;
-  brokerEmail: string; // שינוי כאן
+  brokerEmail: string;
 }
 
 const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEmail }: CreatePropertyModalProps) => {
@@ -39,10 +39,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [marketingType, setMarketingType] = useState<'מכירה' | 'השכרה'>('מכירה');
+  const [isUploading, setIsUploading] = useState(false);
 
-
-
-  // עדכון הטופס כשפותחים לעריכה או יצירה חדשה
   useEffect(() => {
     console.log('🔄 עדכון טופס:', { editProperty, isOpen });
 
@@ -52,7 +50,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         setFormData({
           title: editProperty.title || '',
           neighborhood: editProperty.neighborhood || '',
-          city: 'חריש', // תמיד חריש
+          city: 'חריש',
           street: editProperty.street || '',
           floor: editProperty.floor || '',
           rooms: editProperty.rooms || '',
@@ -65,7 +63,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
       } else {
         console.log('➕ איפוס טופס לנכס חדש');
-        // איפוס הטופס כשיוצרים נכס חדש
         setFormData({
           title: '',
           neighborhood: '',
@@ -88,29 +85,60 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      console.log('📎 העלאת מסמך בלעדיות:', file.name);
-      setExclusivityDocument(file);
+      console.log('📎 נבחר מסמך בלעדיות:', file.name);
+      
+      // בדיקת גודל קובץ (10MB)
+      if (!FileUploadService.isFileSizeValid(file, 10)) {
+        alert('הקובץ גדול מדי. הגודל המקסימלי הוא 10MB');
+        return;
+      }
 
-      // יצירת URL זמני לתצוגה
+      // בדיקת סוג קובץ
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png'
+      ];
+      
+      if (!FileUploadService.isFileTypeValid(file, allowedTypes)) {
+        alert('סוג קובץ לא נתמך. אנא העלה PDF, Word או תמונה');
+        return;
+      }
+
+      setExclusivityDocument(file);
+      // יצירת URL זמני לתצוגה עד להעלאה
       const tempUrl = URL.createObjectURL(file);
       setExclusivityDocumentUrl(tempUrl);
-
-      console.log('✅ מסמך בלעדיות הועלה:', file.name);
+      console.log('✅ מסמך בלעדיות נבחר:', file.name);
     }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      console.log('🖼️ העלאת תמונות:', files.length);
+      console.log('🖼️ נבחרו תמונות:', files.length);
       const newImages = Array.from(files);
+      
+      // בדיקת כל תמונה
+      for (const file of newImages) {
+        if (!FileUploadService.isFileSizeValid(file, 5)) {
+          alert(`התמונה ${file.name} גדולה מדי. הגודל המקסימלי הוא 5MB`);
+          return;
+        }
+        
+        if (!FileUploadService.isFileTypeValid(file, ['image/*'])) {
+          alert(`הקובץ ${file.name} אינו תמונה תקינה`);
+          return;
+        }
+      }
+      
       setImages(prevImages => [...prevImages, ...newImages]);
-
       // יצירת URLs זמניים לתצוגה
       const newUrls = newImages.map(file => URL.createObjectURL(file));
       setImageUrls(prevUrls => [...prevUrls, ...newUrls]);
-
-      console.log('✅ תמונות הועלו:', newImages.length);
+      console.log('✅ תמונות נבחרו:', newImages.length);
     }
   };
 
@@ -149,6 +177,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
     console.log('🖼️ מספר תמונות:', images.length);
 
     try {
+      setIsUploading(true);
+
       // יצירת אובייקט הנכס
       const propertyData = {
         title: formData.title,
@@ -157,7 +187,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         price: formData.price ? Number(formData.price) : 0,
         type: formData.type,
         size: 0,
-        broker: brokerEmail, // שינוי כאן
+        broker: brokerEmail,
         createdAt: editProperty?.createdAt || new Date().toISOString(),
         neighborhood: formData.neighborhood,
         city: formData.city,
@@ -165,26 +195,53 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         floor: formData.floor,
         rooms: formData.rooms,
         offersUntil: formData.offersUntil,
-        exclusivityDocument: '', // נעדכן בנפרד
+        exclusivityDocument: '',
         marketingType: marketingType,
       };
 
       // העלאת מסמך בלעדיות אם קיים
       if (exclusivityDocument) {
         try {
-          propertyData.exclusivityDocument = `זמני - ${exclusivityDocument.name} (הועלה ${new Date().toLocaleDateString('he-IL')})`;
-          console.log('✅ מסמך בלעדיות סומן כהועלה (זמני)');
+          console.log('📤 מעלה מסמך בלעדיות...');
+          const documentUrl = await FileUploadService.uploadFile(exclusivityDocument);
+          propertyData.exclusivityDocument = documentUrl;
+          console.log('✅ מסמך בלעדיות הועלה:', documentUrl);
         } catch (error) {
-          console.error('❌ שגיאה בסימון מסמך בלעדיות:', error);
+          console.error('❌ שגיאה בהעלאת מסמך בלעדיות:', error);
+          alert('שגיאה בהעלאת מסמך בלעדיות. אנא נסה שנית.');
+          return;
         }
       }
 
       // קריאה לפונקציה המקורית - כאן מתבצעת הפעולה האמיתית
       onSubmit(propertyData);
+
+      // העלאת תמונות בנפרד לטבלת תמונות (אחרי יצירת הנכס)
+      if (images.length > 0) {
+        try {
+          console.log('🖼️ מעלה תמונות...');
+          // כרגע נעלה את התמונות אבל לא נחכה להן
+          // כי אנחנו צריכים את מזהה הנכס תחילה
+          FileUploadService.uploadMultipleFiles(images)
+            .then(imageUrls => {
+              console.log('✅ כל התמונות הועלו בהצלחה:', imageUrls);
+              // כאן אפשר לעדכן את טבלת התמונות ב-Airtable אם רוצים
+            })
+            .catch(error => {
+              console.error('❌ שגיאה בהעלאת תמונות:', error);
+            });
+        } catch (error) {
+          console.error('❌ שגיאה בהעלאת תמונות:', error);
+          // לא נעצור את התהליך בגלל שגיאת תמונות
+        }
+      }
+
       onClose();
     } catch (error) {
       console.error('❌ שגיאה בשמירת נכס:', error);
-      alert('שגיאה בששמירת הנכס. נסה שנית.');
+      alert('שגיאה בשמירת הנכס. נסה שנית.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -208,14 +265,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
           </DialogTitle>
         </DialogHeader>
 
-        {/* הוספת התראה על העלאת קבצים זמנית */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            הקבצים והתמונות יסומנו כ"זמניים" עד לחיבור שירות העלאת קבצים חיצוני
-          </AlertDescription>
-        </Alert>
-
+        {/* הסרת ההתראה על הקבצים הזמניים */}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">שם הנכס *</Label>
@@ -396,6 +447,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                     <FileUp className="h-4 w-4" />
                     העלה מסמך בלעדיות
                   </label>
+                  <p className="text-xs text-gray-600 mt-2">PDF, Word או תמונה עד 10MB</p>
                 </div>
               )}
             </div>
@@ -445,7 +497,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                   <FileImage className="h-4 w-4" />
                   הוסף תמונות
                 </label>
-                <p className="text-sm text-gray-600 mt-2">ניתן לבחור מספר תמונות</p>
+                <p className="text-sm text-gray-600 mt-2">תמונות עד 5MB כל אחת</p>
               </div>
             </div>
           </div>
@@ -454,10 +506,27 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
 
 
           <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
-              {editProperty ? 'עדכן' : 'הוסף'}
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מעלה קבצים...
+                </>
+              ) : (
+                editProperty ? 'עדכן' : 'הוסף'
+              )}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose} 
+              className="flex-1"
+              disabled={isUploading}
+            >
               ביטול
             </Button>
           </div>
