@@ -1,4 +1,3 @@
-
 // שירות העלאת קבצים לשרת חיצוני
 export class FileUploadService {
   private static readonly UPLOAD_URL = 'https://files.thinka.co.il/upload';
@@ -21,6 +20,7 @@ export class FileUploadService {
       });
       
       console.log('📊 סטטוס תגובה:', response.status);
+      console.log('📊 Headers:', response.headers);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -28,29 +28,51 @@ export class FileUploadService {
         throw new Error(`Failed to upload file: ${response.status} ${response.statusText}`);
       }
       
-      // נניח שהשרת מחזיר URL בתגובה
+      // ניסיון לקריאת התגובה כ-JSON תחילה
       const responseText = await response.text();
-      console.log('✅ תגובה מהשרת:', responseText);
+      console.log('📄 תגובה גולמית מהשרת:', responseText);
       
-      // אם השרת מחזיר JSON עם URL
       try {
         const jsonResponse = JSON.parse(responseText);
+        console.log('✅ JSON שפורסר:', jsonResponse);
+        
+        // בדיקה לפי המבנה שתיארת: { "url": "...", "filename": "..." }
         if (jsonResponse.url) {
           console.log('✅ קובץ הועלה בהצלחה:', jsonResponse.url);
           return jsonResponse.url;
         }
-      } catch (e) {
-        // אם זה לא JSON, נניח שהתגובה היא ה-URL עצמו
+        
+        // אם אין url, נבדוק אם יש קישור אחר
+        if (jsonResponse.link) {
+          console.log('✅ קובץ הועלה בהצלחה (link):', jsonResponse.link);
+          return jsonResponse.link;
+        }
+        
+        console.error('❌ לא נמצא URL בתגובת JSON:', jsonResponse);
+        throw new Error('No URL found in server response');
+        
+      } catch (parseError) {
+        console.log('⚠️ התגובה אינה JSON תקין, מנסה כטקסט רגיל');
+        
+        // אם זה לא JSON, בודקים אם זה URL ישירות
         if (responseText.startsWith('http')) {
-          console.log('✅ קובץ הועלה בהצלחה:', responseText);
+          console.log('✅ קובץ הועלה בהצלחה (טקסט):', responseText.trim());
           return responseText.trim();
         }
+        
+        console.error('❌ תגובה לא מובנת:', responseText);
+        throw new Error('Invalid response format from upload server');
       }
-      
-      throw new Error('Invalid response format from upload server');
       
     } catch (error) {
       console.error('❌ שגיאה בהעלאת קובץ:', error);
+      
+      // הוספת פרטים נוספים על השגיאה
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('❌ שגיאת רשת - בדוק חיבור לאינטרנט או CORS');
+        throw new Error('Network error: Unable to connect to upload server. Check CORS configuration.');
+      }
+      
       throw error;
     }
   }
