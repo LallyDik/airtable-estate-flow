@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Building, 
   Home, 
-  Maximize, 
   Layers,
   DollarSign
 } from 'lucide-react';
@@ -32,12 +31,6 @@ const PropertyBasicInfo = ({ property, formatPrice }: PropertyBasicInfoProps) =>
             <Home className="h-4 w-4 text-gray-500" />
             <span className="text-sm text-gray-600">חדרים:</span>
             <span className="font-medium">{property.rooms || 'לא צוין'}</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Maximize className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">שטח:</span>
-            <span className="font-medium">{property.size || 'לא צוין'} מ"ר</span>
           </div>
           
           <div className="flex items-center gap-2">
