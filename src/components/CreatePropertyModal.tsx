@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -221,43 +220,72 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
       }
 
       // קריאה לפונקציה המקורית - כאן מתבצעת הפעולה האמיתית
+      console.log('🏠 יוצר נכס עם הנתונים:', propertyData);
       const createdProperty = await onSubmit(propertyData);
-      console.log('✅ נכס נוצר:', createdProperty);
+      console.log('✅ נכס נוצר - תגובה מהשרת:', createdProperty);
 
-      // קבלת ID הנכס שנוצר
-      const propertyId = createdProperty?.id || createdProperty?.record?.id;
-      console.log('🆔 ID הנכס שנוצר:', propertyId);
+      // קבלת ID הנכס שנוצר - בדיקה מעמיקה יותר
+      let propertyId = null;
+      
+      if (createdProperty?.id) {
+        propertyId = createdProperty.id;
+        console.log('🆔 ID נמצא ישירות:', propertyId);
+      } else if (createdProperty?.record?.id) {
+        propertyId = createdProperty.record.id;
+        console.log('🆔 ID נמצא ברשומה:', propertyId);
+      } else if (typeof createdProperty === 'string' && createdProperty.startsWith('rec')) {
+        propertyId = createdProperty;
+        console.log('🆔 ID הוא מחרוזת:', propertyId);
+      }
+      
+      console.log('🔍 ID סופי של הנכס:', propertyId);
 
       // העלאת תמונות לטבלת תמונות אם יש מזהה נכס
-      if (images.length > 0 && propertyId) {
-        try {
-          console.log('🖼️ מעלה תמונות לטבלת תמונות...');
-          
-          // העלאת כל תמונה בנפרד
-          for (let i = 0; i < images.length; i++) {
-            const image = images[i];
-            console.log(`📤 מעלה תמונה ${i + 1}/${images.length}:`, image.name);
+      if (images.length > 0) {
+        if (!propertyId) {
+          console.error('❌ לא נמצא ID לנכס - לא ניתן להעלות תמונות');
+          alert('הנכס נוצר אך התמונות לא הועלו בגלל בעיה טכנית');
+        } else {
+          try {
+            console.log('🖼️ מתחיל העלאת תמונות לטבלת תמונות...');
+            console.log('🆔 ID הנכס להעלאת תמונות:', propertyId);
             
-            try {
-              // העלאת התמונה לשרת קבצים
-              const imageUrl = await FileUploadService.uploadFile(image);
-              console.log('✅ תמונה הועלה לשרת:', imageUrl);
+            // העלאת כל תמונה בנפרד
+            for (let i = 0; i < images.length; i++) {
+              const image = images[i];
+              console.log(`📤 מעלה תמונה ${i + 1}/${images.length}:`, image.name);
               
-              // שמירת התמונה בטבלת תמונות
-              await AirtableService.uploadImageToImagesTable(propertyId, imageUrl, image.name);
-              console.log('✅ תמונה נשמרה בטבלת תמונות');
-              
-            } catch (imageError) {
-              console.error(`❌ שגיאה בהעלאת תמונה ${i + 1}:`, imageError);
-              // ממשיכים עם התמונות הבאות גם אם אחת נכשלה
+              try {
+                // העלאת התמונה לשרת קבצים
+                console.log('📤 מעלה תמונה לשרת קבצים...');
+                const imageUrl = await FileUploadService.uploadFile(image);
+                console.log('✅ תמונה הועלה לשרת:', imageUrl);
+                
+                // שמירת התמונה בטבלת תמונות
+                console.log('💾 שומר תמונה בטבלת תמונות...', {
+                  propertyId,
+                  imageUrl,
+                  imageName: image.name
+                });
+                
+                const result = await AirtableService.uploadImageToImagesTable(propertyId, imageUrl, image.name);
+                console.log('✅ תמונה נשמרה בטבלת תמונות:', result);
+                
+              } catch (imageError) {
+                console.error(`❌ שגיאה בהעלאת תמונה ${i + 1}:`, imageError);
+                console.error('📄 פרטי השגיאה:', imageError);
+                // ממשיכים עם התמונות הבאות גם אם אחת נכשלה
+              }
             }
+            
+            console.log('✅ סיום תהליך העלאת תמונות');
+          } catch (error) {
+            console.error('❌ שגיאה כללית בהעלאת תמונות:', error);
+            console.log('⚠️ הנכס נוצר בהצלחה אבל התמונות לא הועלו');
           }
-          
-          console.log('✅ סיום העלאת תמונות');
-        } catch (error) {
-          console.error('❌ שגיאה בהעלאת תמונות:', error);
-          console.log('⚠️ הנכס נוצר בהצלחה אבל התמונות לא הועלו');
         }
+      } else {
+        console.log('ℹ️ אין תמונות להעלאה');
       }
 
       onClose();
@@ -511,7 +539,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                 </div>
               )}
 
-              {/* כפתور העלאת תמונות */}
+              {/* כפתור העלאת תמונות */}
               <div className="text-center">
                 <input
                   type="file"

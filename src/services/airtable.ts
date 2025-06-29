@@ -386,12 +386,24 @@ export class AirtableService {
     }
   }
 
-  // פונקציה להעלאת תמונות לטבלת תמונות - עם URL אמיתי
+  // פונקציה להעלאת תמונות לטבלת תמונות - עדכון עם debugging מרחיב
   static async uploadImageToImagesTable(propertyId: string, imageUrl: string, imageName: string) {
-    console.log('🖼️ שומר תמונה בטבלת תמונות:', imageName);
-    console.log('🔗 URL התמונה:', imageUrl);
+    console.log('🖼️ מתחיל שמירת תמונה בטבלת תמונות...');
+    console.log('🆔 Property ID:', propertyId);
+    console.log('🔗 Image URL:', imageUrl);
+    console.log('📝 Image Name:', imageName);
     
     try {
+      // בדיקה שכל הפרמטרים קיימים
+      if (!propertyId || !imageUrl || !imageName) {
+        throw new Error('חסרים פרמטרים חובה לשמירת תמונה');
+      }
+      
+      // בדיקה שה-URL תקין
+      if (!imageUrl.startsWith('http')) {
+        throw new Error('URL התמונה אינו תקין');
+      }
+      
       const fields = {
         'נכסים': [propertyId], // קישור לנכס
         'שם התמונה': imageName,
@@ -401,7 +413,7 @@ export class AirtableService {
         }]
       };
       
-      console.log('📝 שדות לשמירה בטבלת תמונות:', fields);
+      console.log('📝 שדות לשמירה בטבלת תמונות:', JSON.stringify(fields, null, 2));
       
       const response = await fetch(`${BASE_URL}/טבלת תמונות`, {
         method: 'POST',
@@ -409,18 +421,23 @@ export class AirtableService {
         body: JSON.stringify({ fields })
       });
       
+      console.log('📊 סטטוס תגובה:', response.status);
+      console.log('📊 סטטוס טקסט:', response.statusText);
+      
       if (!response.ok) {
         const errorData = await response.text();
-        console.error('❌ שגיאה בשמירת תמונה:', errorData);
-        throw new Error(`Failed to save image: ${response.status} ${response.statusText}`);
+        console.error('❌ שגיאה בשמירת תמונה - תגובת שרת:', errorData);
+        throw new Error(`Failed to save image: ${response.status} ${response.statusText} - ${errorData}`);
       }
       
       const data = await response.json();
-      console.log('✅ תמונה נשמרה בהצלחה בטבלת תמונות:', data);
+      console.log('✅ תמונה נשמרה בהצלחה בטבלת תמונות!');
+      console.log('📄 נתוני התגובה:', JSON.stringify(data, null, 2));
       return data;
       
     } catch (error) {
       console.error('❌ שגיאה בשמירת תמונה:', error);
+      console.error('📄 פרטי השגיאה:', error);
       throw error;
     }
   }
