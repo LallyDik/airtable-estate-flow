@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
     neighborhood: '',
     city: 'חריש',
     street: '',
+    number: '',
     floor: '',
     rooms: '',
     type: '',
@@ -50,8 +52,9 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         setFormData({
           title: editProperty.title || '',
           neighborhood: editProperty.neighborhood || '',
-          city: 'חריש',
+          city: editProperty.city || 'חריש',
           street: editProperty.street || '',
+          number: editProperty.number || '',
           floor: editProperty.floor || '',
           rooms: editProperty.rooms || '',
           type: editProperty.type || '',
@@ -60,6 +63,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
           description: editProperty.description || '',
           address: editProperty.address || '',
         });
+        setMarketingType((editProperty.marketingType as 'מכירה' | 'השכרה') || 'מכירה');
         setExclusivityDocumentUrl(editProperty.exclusivityDocument || '');
       } else {
         console.log('➕ איפוס טופס לנכס חדש');
@@ -68,6 +72,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
           neighborhood: '',
           city: 'חריש',
           street: '',
+          number: '',
           floor: '',
           rooms: '',
           type: '',
@@ -78,6 +83,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         });
         setExclusivityDocument(null);
         setExclusivityDocumentUrl('');
+        setMarketingType('מכירה');
       }
     }
   }, [editProperty, isOpen]);
@@ -170,7 +176,8 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
     }
 
     // Create full address from components
-    const fullAddress = `${formData.street}, ${formData.neighborhood}, ${formData.city}`;
+    const addressParts = [formData.street, formData.number, formData.neighborhood, formData.city].filter(Boolean);
+    const fullAddress = addressParts.join(', ');
 
     console.log('🔄 שולח נכס עם מתווך:', brokerEmail);
     console.log('📎 מסמך בלעדיות:', exclusivityDocument?.name || 'אין');
@@ -192,6 +199,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
         neighborhood: formData.neighborhood,
         city: formData.city,
         street: formData.street,
+        number: formData.number,
         floor: formData.floor,
         rooms: formData.rooms,
         offersUntil: formData.offersUntil,
@@ -264,8 +272,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
             {editProperty ? 'עריכת נכס' : 'הוספת נכס חדש'}
           </DialogTitle>
         </DialogHeader>
-
-        {/* הסרת ההתראה על הקבצים הזמניים */}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -307,7 +313,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="street">רחוב</Label>
               <Input
@@ -315,6 +321,15 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                 value={formData.street}
                 onChange={(e) => setFormData({ ...formData, street: e.target.value })}
                 required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="number">מספר</Label>
+              <Input
+                id="number"
+                value={formData.number}
+                onChange={(e) => setFormData({ ...formData, number: e.target.value })}
               />
             </div>
 
@@ -371,25 +386,14 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
             </div>
 
             <div>
-              <Label htmlFor="offersUntil">מוכן לקבל הצעות עד</Label>
+              <Label htmlFor="offersUntil">מוכן לקבל הצעות עד (₪)</Label>
               <Input
                 id="offersUntil"
-                type="text"
+                type="number"
                 value={formData.offersUntil}
                 onChange={(e) => setFormData({ ...formData, offersUntil: e.target.value })}
               />
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="description">תיאור חופשי לפרסום *</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              required
-            />
           </div>
 
           <div dir="rtl">
@@ -408,6 +412,17 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                 <SelectItem value="השכרה">השכרה</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="description">תיאור חופשי לפרסום *</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
+              required
+            />
           </div>
 
           <div>
@@ -480,7 +495,7 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
                 </div>
               )}
 
-              {/* כפתור העלאת תמונות */}
+              {/* כפתور העלאת תמונות */}
               <div className="text-center">
                 <input
                   type="file"
@@ -501,9 +516,6 @@ const CreatePropertyModal = ({ isOpen, onClose, onSubmit, editProperty, brokerEm
               </div>
             </div>
           </div>
-
-          {/* הוספת שדה סוג שיווק */}
-
 
           <div className="flex gap-2 pt-4">
             <Button 

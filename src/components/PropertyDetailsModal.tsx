@@ -186,11 +186,13 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                       <span className="font-medium">{property.rooms || 'לא צוין'}</span>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <Maximize className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">שטח:</span>
-                      <span className="font-medium">{property.size ? `${property.size} מ"ר` : 'לא צוין'}</span>
-                    </div>
+                    {property.size && (
+                      <div className="flex items-center gap-2">
+                        <Maximize className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">שטח:</span>
+                        <span className="font-medium">{property.size} מ"ר</span>
+                      </div>
+                    )}
                     
                     <div className="flex items-center gap-2">
                       <Layers className="h-4 w-4 text-gray-500" />
@@ -204,6 +206,13 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                       <span className="font-medium text-green-600">
                         {property.price ? formatPrice(property.price) : 'לא צוין'}
                       </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">סוג שיווק:</span>
+                      <Badge variant="outline" className={property.marketingType === 'מכירה' ? 'text-blue-600 border-blue-200' : 'text-green-600 border-green-200'}>
+                        {property.marketingType || 'מכירה'}
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -230,6 +239,14 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
                       <span className="text-sm text-gray-600">רחוב:</span>
                       <span className="font-medium">{property.street || 'לא צוין'}</span>
                     </div>
+
+                    {property.number && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">מספר:</span>
+                        <span className="font-medium">{property.number}</span>
+                      </div>
+                    )}
                     
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-500" />
@@ -258,17 +275,17 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-orange-500" />
+                    <DollarSign className="h-5 w-5 text-orange-500" />
                     <span className="text-sm text-gray-600">מוכן לקבל הצעות עד:</span>
                     <Badge variant="outline" className="text-orange-600 border-orange-200">
-                      {property.offersUntil}
+                      {formatPrice(parseFloat(property.offersUntil))}
                     </Badge>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* מסמכים - קבלת מסמכים יחידים ללא כפילות */}
+            {/* מסמכים */}
             {documents.length > 0 && (
               <Card>
                 <CardContent className="p-4">
@@ -310,7 +327,7 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
               </Card>
             )}
 
-            {/* גלריית תמונות - רק תמונות תקינות */}
+            {/* גלריית תמונות */}
             {images.length > 0 && (
               <Card>
                 <CardContent className="p-4">
