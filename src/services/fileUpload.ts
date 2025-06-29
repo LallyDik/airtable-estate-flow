@@ -1,3 +1,4 @@
+
 // שירות העלאת קבצים לשרת חיצוני
 export class FileUploadService {
   private static readonly UPLOAD_URL = 'https://files.thinka.co.il/upload';
@@ -20,7 +21,6 @@ export class FileUploadService {
       });
       
       console.log('📊 סטטוס תגובה:', response.status);
-      console.log('📊 Headers:', response.headers);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -28,7 +28,7 @@ export class FileUploadService {
         throw new Error(`Failed to upload file: ${response.status} ${response.statusText}`);
       }
       
-      // ניסיון לקריאת התגובה כ-JSON תחילה
+      // קריאת התגובה
       const responseText = await response.text();
       console.log('📄 תגובה גולמית מהשרת:', responseText);
       
@@ -36,13 +36,23 @@ export class FileUploadService {
         const jsonResponse = JSON.parse(responseText);
         console.log('✅ JSON שפורסר:', jsonResponse);
         
-        // בדיקה לפי המבנה שתיארת: { "url": "...", "filename": "..." }
+        // בדיקה לפי המבנה החדש: { "fields": { "מסמך בלעדיות": [{ "url": "..." }] } }
+        if (jsonResponse.fields && jsonResponse.fields['מסמך בלעדיות'] && 
+            Array.isArray(jsonResponse.fields['מסמך בלעדיות']) &&
+            jsonResponse.fields['מסמך בלעדיות'][0] && 
+            jsonResponse.fields['מסמך בלעדיות'][0].url) {
+          const fileUrl = jsonResponse.fields['מסמך בלעדיות'][0].url;
+          console.log('✅ קובץ הועלה בהצלחה (פורמט Airtable):', fileUrl);
+          return fileUrl;
+        }
+        
+        // בדיקה לפי המבנה הפשוט: { "url": "..." }
         if (jsonResponse.url) {
-          console.log('✅ קובץ הועלה בהצלחה:', jsonResponse.url);
+          console.log('✅ קובץ הועלה בהצלחה (פורמט פשוט):', jsonResponse.url);
           return jsonResponse.url;
         }
         
-        // אם אין url, נבדוק אם יש קישור אחר
+        // אם יש link במקום url
         if (jsonResponse.link) {
           console.log('✅ קובץ הועלה בהצלחה (link):', jsonResponse.link);
           return jsonResponse.link;
