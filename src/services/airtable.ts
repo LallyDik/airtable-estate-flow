@@ -1,4 +1,3 @@
-
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -19,16 +18,12 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
     'תיאור חופשי לפרסום': property.description,
     'מחיר שיווק': property.price,
     'שכונה': property.neighborhood || '',
-    'עיר': property.city || '',
+    'עיר': property.city || 'חריש',
     'רחוב': property.street || '',
+    'מספר': property.number || '',
     'קומה': property.floor || '',
-    'מספר בית': property.number || '',
     'סוג השיווק': property.marketingType || 'מכירה',
-    'כתובת': property.address || `${property.street || ''}, ${property.neighborhood || ''}, ${property.city || ''}`.trim(),
-    'שטח': property.size || 0,
-    'מוכן לקבל הצעות עד': property.offersUntil || '',
-    'מסמך בלעדיות': property.exclusivityDocument || '',
-    'זמן יצירה': property.createdAt || new Date().toISOString(),
+    'מוכן לקבל הצעות עד': property.offersUntil ? parseFloat(property.offersUntil) : null,
   };
 
   // הוספת קישור למתווך רק בעת יצירת נכס חדש, לא בעדכון
@@ -56,6 +51,11 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
         fields['כמות חדרים'] = roomsStr.trim();
       }
     }
+  }
+
+  // הוספת מסמך בלעדיות אם קיים
+  if (property.exclusivityDocument) {
+    fields['מסמך בלעדיות'] = property.exclusivityDocument;
   }
 
   console.log('📝 שדות ליצירת/עדכון נכס:', fields);
@@ -87,7 +87,6 @@ const mapPostToAirtableFields = (post: Omit<Post, 'id'>, propertyRecordId?: stri
     'תאריך פרסום': post.date,
     'זמן פרסום': timeSlotValue,
     'סטטוס פרסום': 'פרסום מיידי'
-    // הסרנו את 'מועד פרסום' כי זה שדה מחושב
   };
 
   // הוספת קישור לנכס אם קיים
@@ -123,7 +122,6 @@ export class AirtableService {
     
     try {
       console.log('📡 שולח בקשה ל-Airtable...');
-      // שינוי שם הטבלה לעברית
       const response = await fetch(`${BASE_URL}/אנשי קשר?maxRecords=1`, { headers });
       
       console.log('📊 סטטוס תגובה:', response.status);
@@ -240,7 +238,7 @@ export class AirtableService {
             id: record.id,
             title: record.fields['שם נכס לתצוגה'] || record.fields['שם נכס'] || 'נכס ללא שם',
             description: record.fields['תיאור חופשי לפרסום'] || '',
-            address: `${record.fields['רחוב'] || ''} ${record.fields['עיר'] || ''}`.trim() || 'כתובת לא זמינה',
+            address: `${record.fields['רחוב'] || ''} ${record.fields['מספר'] || ''} ${record.fields['עיר'] || ''}`.trim() || 'כתובת לא זמינה',
             price: record.fields['מחיר שיווק'] || 0,
             type: record.fields['סוג נכס'] || 'לא צוין',
             size: record.fields['שטח'] || 0,
@@ -251,9 +249,10 @@ export class AirtableService {
             city: record.fields['עיר'] || '',
             street: record.fields['רחוב'] || '',
             floor: record.fields['קומה'] || '',
-            number: record.fields['מספר בית'] || '',
-            offersUntil: record.fields['מוכן לקבל הצעות עד'] || '',
+            number: record.fields['מספר'] || '',
+            offersUntil: record.fields['מוכן לקבל הצעות עד'] ? String(record.fields['מוכן לקבל הצעות עד']) : '',
             exclusivityDocument: record.fields['מסמך בלעדיות'] || '',
+            marketingType: record.fields['סוג השיווק'] || 'מכירה',
             ...record.fields
           };
           console.log('🏠 נכס נמצא:', propertyData);
@@ -332,7 +331,7 @@ export class AirtableService {
     }
     
     const data = await response.json();
-    console.log('✅ נכס עודכn בהצלחה:', data.id);
+    console.log('✅ נכס עודכן בהצלחה:', data.id);
     return { id: data.id, ...data.fields };
   }
 
@@ -614,7 +613,7 @@ export class AirtableService {
     console.log('✅ פרסום נמחק בהצלחה');
   }
 
-  // Images API - שינוי לטבלה "תמונות"
+  // Images API - שינוי לטבלה "טבלת תמונות"
   static async getImages(propertyId: string) {
     console.log('🖼️ מבקש תמונות עבור נכס:', propertyId);
     
