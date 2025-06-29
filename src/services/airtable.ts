@@ -472,33 +472,25 @@ export class AirtableService {
           console.log('📈 מספר פרסומים של המתווך:', userPosts.length);
           
           return userPosts.map((record: any) => {
-            // קבלת שם הנכס הנכון מהשדות המחושבים
+            // קבלת שם הנכס הנכון מהשדה החדש
             let propertyTitle = 'נכס לפרסום';
             
-            // נסה שדות שונים לשם הנכס
-            const titleFields = [
-              'שם נכס לתצוגה (from נכסים לפרסום)',
-              'שם נכס (from נכסים לפרסום)', 
-              'title (from נכסים לפרסום)'
-            ];
-            
-            for (const field of titleFields) {
-              if (record.fields[field]) {
-                let title = record.fields[field];
-                // אם זה מערך, קח את הערך הראשון
-                if (Array.isArray(title)) {
-                  title = title[0];
-                }
-                // ודא שזה שם תקין
-                if (title && 
-                    typeof title === 'string' && 
-                    title.trim() && 
-                    !title.includes('rec') &&
-                    title !== 'נכס') {
-                  propertyTitle = title;
-                  console.log('📝 נמצא שם נכס מהשדה:', field, '->', title);
-                  break;
-                }
+            // השתמש בשדה החדש מ-Airtable
+            if (record.fields['שם נכס (from נכסים לפרסום)']) {
+              let title = record.fields['שם נכס (from נכסים לפרסום)'];
+              // אם זה מערך, קח את הערך הראשון
+              if (Array.isArray(title) && title.length > 0) {
+                title = title[0];
+              }
+              // ודא שזה שם תקין
+              if (title && 
+                  typeof title === 'string' && 
+                  title.trim() && 
+                  !title.includes('rec') &&
+                  title !== 'נכס' &&
+                  title !== 'undefined') {
+                propertyTitle = title;
+                console.log('📝 נמצא שם נכס מהשדה החדש:', title);
               }
             }
             

@@ -32,12 +32,10 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
     action();
   };
 
-  // פונקציה משופרת לקבלת שם הנכס
+  // פונקציה לקבלת שם הנכס - תשתמש בשדה החדש מ-Airtable
   const getPropertyTitle = () => {
     console.log('PostCard - מחפש שם נכס עבור:', post);
     console.log('PostCard - propertyTitle בפוסט:', post.propertyTitle);
-    console.log('PostCard - property ID:', post.property);
-    console.log('PostCard - properties זמינים:', properties?.length || 0);
     
     // אם יש שם נכס בפוסט עצמו ואינו ברירת מחדל גרועה
     if (post.propertyTitle && 
@@ -45,18 +43,17 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
         post.propertyTitle.trim() && 
         !post.propertyTitle.includes('rec') && // לא מזהה Airtable
         post.propertyTitle !== 'נכס' &&
-        post.propertyTitle !== 'נכס לפרסום') {
+        post.propertyTitle !== 'נכס לפרסום' &&
+        post.propertyTitle !== 'undefined') {
       console.log('PostCard - מצא שם נכס תקין בפוסט:', post.propertyTitle);
       return post.propertyTitle;
     }
     
-    // חפש בנתוני הנכסים לפי ID
+    // אם לא, נסה לחפש ברשימת הנכסים
     if (properties && properties.length > 0 && post.property) {
       const property = properties.find(p => p.id === post.property);
       console.log('PostCard - נכס שנמצא ברשימה:', property);
       
-      let propertyTitle = 'נכס לפרסום'; // default fallback
-
       if (property) {
         // Try different field names that might contain the property title
         const possibleTitles = [
@@ -72,14 +69,11 @@ const PostCard = ({ post, onEdit, onDelete, onViewProperty, properties = [] }: P
               title.trim() && 
               !title.includes('rec') && // not an Airtable ID
               title !== 'נכס') {
-            propertyTitle = title;
-            break;
+            console.log('PostCard - מצא שם נכס תקין:', title);
+            return title;
           }
         }
       }
-    
-      console.log('PostCard - מצא שם נכס תקין:', propertyTitle);
-      return propertyTitle;
     }
     
     console.log('PostCard - לא נמצא שם נכס תקין, משתמש בברירת מחדל');
