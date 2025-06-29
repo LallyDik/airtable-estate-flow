@@ -1,3 +1,4 @@
+
 import { Property, Post } from '@/types';
 
 // ⚠️ חובה לעדכן את הפרטים הבאים:
@@ -17,11 +18,17 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
     'שם נכס לתצוגה': property.title,
     'תיאור חופשי לפרסום': property.description,
     'מחיר שיווק': property.price,
-    'שכונה': property.neighborhood,
-    'עיר': property.city,
-    'רחוב': property.street,
-    'קומה': property.floor,
-    'סוג השיווק': property.marketingType, // הוסף שדה זה
+    'שכונה': property.neighborhood || '',
+    'עיר': property.city || '',
+    'רחוב': property.street || '',
+    'קומה': property.floor || '',
+    'מספר בית': property.number || '',
+    'סוג השיווק': property.marketingType || 'מכירה',
+    'כתובת': property.address || `${property.street || ''}, ${property.neighborhood || ''}, ${property.city || ''}`.trim(),
+    'שטח': property.size || 0,
+    'מוכן לקבל הצעות עד': property.offersUntil || '',
+    'מסמך בלעדיות': property.exclusivityDocument || '',
+    'זמן יצירה': property.createdAt || new Date().toISOString(),
   };
 
   // הוספת קישור למתווך רק בעת יצירת נכס חדש, לא בעדכון
@@ -49,11 +56,6 @@ const mapPropertyToAirtableFields = (property: Omit<Property, 'id'>, isUpdate: b
         fields['כמות חדרים'] = roomsStr.trim();
       }
     }
-  }
-
-  // רק אם יש ערך בשדה "מוכן לקבל הצעות עד" נוסיף אותו
-  if (property.offersUntil && property.offersUntil.trim() !== '') {
-    fields['מוכן לקבל הצעות עד'] = property.offersUntil.trim();
   }
 
   console.log('📝 שדות ליצירת/עדכון נכס:', fields);
