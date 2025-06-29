@@ -1,3 +1,4 @@
+
 // שירות העלאת קבצים לשרת חיצוני
 export class FileUploadService {
   private static readonly UPLOAD_URL = 'https://files.thinka.co.il/upload';
@@ -10,7 +11,7 @@ export class FileUploadService {
     
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', file, 'file');
       
       console.log('🔄 שולח בקשה לשרת:', this.UPLOAD_URL);
       
