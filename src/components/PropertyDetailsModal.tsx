@@ -108,12 +108,14 @@ const PropertyDetailsModal = ({ isOpen, onClose, propertyId, properties }: Prope
   const downloadDocument = (document: any) => {
     console.log('📄 מוריד מסמך:', document);
     if (document.url && !document.url.includes('זמני')) {
-      const link = document.createElement('a');
+      // תיקון: שימוש נכון ב-document.createElement
+      const link = window.document.createElement('a');
       link.href = document.url;
       link.download = document.filename || document.name || 'document';
-      document.body.appendChild(link);
+      link.target = '_blank'; // פתיחה בחלון חדש כגיבוי
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
     } else {
       console.error('מסמך אינו זמין להורדה');
     }
