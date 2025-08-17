@@ -17,6 +17,21 @@ const Auth = ({ onLogin }: AuthProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const handleDemoLogin = () => {
+    const demoUser: User = {
+      id: 'demo-user',
+      email: 'demo@example.com',
+      name: 'משתמש דמו'
+    };
+    
+    onLogin(demoUser);
+    
+    toast({
+      title: "כניסה בוצעה בהצלחה",
+      description: `ברוך הבא, ${demoUser.name}!`,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && name) {
@@ -81,37 +96,59 @@ const Auth = ({ onLogin }: AuthProps) => {
           <p className="text-gray-600">ניהול נכסים ופרסומים</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Input
-                type="text"
-                placeholder="שם מלא"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <Input
-                type="email"
-                placeholder="אימייל"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full"
-                required
-                disabled={isLoading}
-              />
-            </div>
+          <div className="space-y-4">
+            {/* Demo Login Button */}
             <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading}
+              type="button" 
+              onClick={handleDemoLogin}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              variant="default"
             >
-              {isLoading ? 'בודק פרטים...' : 'כניסה למערכת'}
+              כניסה כמשתמש דמו
             </Button>
-          </form>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-muted-foreground">או</span>
+              </div>
+            </div>
+
+            {/* Regular Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Input
+                  type="text"
+                  placeholder="שם מלא"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <Input
+                  type="email"
+                  placeholder="אימייל"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'בודק פרטים...' : 'כניסה למערכת'}
+              </Button>
+            </form>
+          </div>
         </CardContent>
       </Card>
     </div>
